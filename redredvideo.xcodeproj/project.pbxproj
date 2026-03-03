@@ -1,0 +1,657 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		905AE0588784216AF4E54BF8 /* Pods_redredvideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9485F0A2545DFA4CDD14E59C /* Pods_redredvideo.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		944F4E072F553464005F056F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 944F4DE32F553464005F056F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 944F4DEA2F553464005F056F;
+			remoteInfo = redredvideo;
+		};
+		944F4E112F553464005F056F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 944F4DE32F553464005F056F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 944F4DEA2F553464005F056F;
+			remoteInfo = redredvideo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		453AC0EB4B34D6037C3401C5 /* Pods-redredvideo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-redredvideo.release.xcconfig"; path = "Target Support Files/Pods-redredvideo/Pods-redredvideo.release.xcconfig"; sourceTree = "<group>"; };
+		7CD0C0938DD01951B18B389A /* Pods-redredvideo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-redredvideo.debug.xcconfig"; path = "Target Support Files/Pods-redredvideo/Pods-redredvideo.debug.xcconfig"; sourceTree = "<group>"; };
+		944F4DEB2F553464005F056F /* redredvideo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = redredvideo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		944F4E062F553464005F056F /* redredvideoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = redredvideoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		944F4E102F553464005F056F /* redredvideoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = redredvideoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9485F0A2545DFA4CDD14E59C /* Pods_redredvideo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_redredvideo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		944F4E522F5542DB005F056F /* Exceptions for "redredvideo" folder in "redredvideo" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 944F4DEA2F553464005F056F /* redredvideo */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		944F4E092F553464005F056F /* redredvideoTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = redredvideoTests;
+			sourceTree = "<group>";
+		};
+		944F4E132F553464005F056F /* redredvideoUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = redredvideoUITests;
+			sourceTree = "<group>";
+		};
+		944F4E4A2F5542DB005F056F /* redredvideo */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				944F4E522F5542DB005F056F /* Exceptions for "redredvideo" folder in "redredvideo" target */,
+			);
+			path = redredvideo;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		944F4DE82F553464005F056F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				905AE0588784216AF4E54BF8 /* Pods_redredvideo.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		944F4E032F553464005F056F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		944F4E0D2F553464005F056F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		944F4DE22F553464005F056F = {
+			isa = PBXGroup;
+			children = (
+				944F4E4A2F5542DB005F056F /* redredvideo */,
+				944F4E092F553464005F056F /* redredvideoTests */,
+				944F4E132F553464005F056F /* redredvideoUITests */,
+				944F4DEC2F553464005F056F /* Products */,
+				D6FE4431235113210F44E9D0 /* Pods */,
+				B7BE2169BC32CE7A7D6505BF /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		944F4DEC2F553464005F056F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				944F4DEB2F553464005F056F /* redredvideo.app */,
+				944F4E062F553464005F056F /* redredvideoTests.xctest */,
+				944F4E102F553464005F056F /* redredvideoUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B7BE2169BC32CE7A7D6505BF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				9485F0A2545DFA4CDD14E59C /* Pods_redredvideo.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D6FE4431235113210F44E9D0 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				7CD0C0938DD01951B18B389A /* Pods-redredvideo.debug.xcconfig */,
+				453AC0EB4B34D6037C3401C5 /* Pods-redredvideo.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		944F4DEA2F553464005F056F /* redredvideo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 944F4E192F553464005F056F /* Build configuration list for PBXNativeTarget "redredvideo" */;
+			buildPhases = (
+				2B67FB7DA16509AB573C1B8D /* [CP] Check Pods Manifest.lock */,
+				944F4DE72F553464005F056F /* Sources */,
+				944F4DE82F553464005F056F /* Frameworks */,
+				944F4DE92F553464005F056F /* Resources */,
+				04F8590289EF1C7168102953 /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				944F4E4A2F5542DB005F056F /* redredvideo */,
+			);
+			name = redredvideo;
+			productName = redredvideo;
+			productReference = 944F4DEB2F553464005F056F /* redredvideo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		944F4E052F553464005F056F /* redredvideoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 944F4E1E2F553464005F056F /* Build configuration list for PBXNativeTarget "redredvideoTests" */;
+			buildPhases = (
+				944F4E022F553464005F056F /* Sources */,
+				944F4E032F553464005F056F /* Frameworks */,
+				944F4E042F553464005F056F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				944F4E082F553464005F056F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				944F4E092F553464005F056F /* redredvideoTests */,
+			);
+			name = redredvideoTests;
+			productName = redredvideoTests;
+			productReference = 944F4E062F553464005F056F /* redredvideoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		944F4E0F2F553464005F056F /* redredvideoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 944F4E212F553464005F056F /* Build configuration list for PBXNativeTarget "redredvideoUITests" */;
+			buildPhases = (
+				944F4E0C2F553464005F056F /* Sources */,
+				944F4E0D2F553464005F056F /* Frameworks */,
+				944F4E0E2F553464005F056F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				944F4E122F553464005F056F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				944F4E132F553464005F056F /* redredvideoUITests */,
+			);
+			name = redredvideoUITests;
+			productName = redredvideoUITests;
+			productReference = 944F4E102F553464005F056F /* redredvideoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		944F4DE32F553464005F056F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					944F4DEA2F553464005F056F = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					944F4E052F553464005F056F = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 944F4DEA2F553464005F056F;
+					};
+					944F4E0F2F553464005F056F = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 944F4DEA2F553464005F056F;
+					};
+				};
+			};
+			buildConfigurationList = 944F4DE62F553464005F056F /* Build configuration list for PBXProject "redredvideo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 944F4DE22F553464005F056F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 944F4DEC2F553464005F056F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				944F4DEA2F553464005F056F /* redredvideo */,
+				944F4E052F553464005F056F /* redredvideoTests */,
+				944F4E0F2F553464005F056F /* redredvideoUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		944F4DE92F553464005F056F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		944F4E042F553464005F056F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		944F4E0E2F553464005F056F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		04F8590289EF1C7168102953 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-redredvideo/Pods-redredvideo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-redredvideo/Pods-redredvideo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-redredvideo/Pods-redredvideo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2B67FB7DA16509AB573C1B8D /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-redredvideo-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		944F4DE72F553464005F056F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		944F4E022F553464005F056F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		944F4E0C2F553464005F056F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		944F4E082F553464005F056F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 944F4DEA2F553464005F056F /* redredvideo */;
+			targetProxy = 944F4E072F553464005F056F /* PBXContainerItemProxy */;
+		};
+		944F4E122F553464005F056F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 944F4DEA2F553464005F056F /* redredvideo */;
+			targetProxy = 944F4E112F553464005F056F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		944F4E1A2F553464005F056F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7CD0C0938DD01951B18B389A /* Pods-redredvideo.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/redredvideo/Libs/LeLelinkKit",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = redredvideo/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "需要访问相册以保存视频";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要访问相册以保存视频";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hpplay.tvassistant;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		944F4E1B2F553464005F056F /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 453AC0EB4B34D6037C3401C5 /* Pods-redredvideo.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/redredvideo/Libs/LeLelinkKit",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = redredvideo/Info.plist;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "需要访问相册以保存视频";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "需要访问相册以保存视频";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hpplay.tvassistant;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		944F4E1C2F553464005F056F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		944F4E1D2F553464005F056F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		944F4E1F2F553464005F056F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hpplay.redredvideoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/redredvideo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/redredvideo";
+			};
+			name = Debug;
+		};
+		944F4E202F553464005F056F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hpplay.redredvideoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/redredvideo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/redredvideo";
+			};
+			name = Release;
+		};
+		944F4E222F553464005F056F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hpplay.redredvideoUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = redredvideo;
+			};
+			name = Debug;
+		};
+		944F4E232F553464005F056F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7R34852FKA;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.hpplay.redredvideoUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = redredvideo;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		944F4DE62F553464005F056F /* Build configuration list for PBXProject "redredvideo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				944F4E1C2F553464005F056F /* Debug */,
+				944F4E1D2F553464005F056F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		944F4E192F553464005F056F /* Build configuration list for PBXNativeTarget "redredvideo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				944F4E1A2F553464005F056F /* Debug */,
+				944F4E1B2F553464005F056F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		944F4E1E2F553464005F056F /* Build configuration list for PBXNativeTarget "redredvideoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				944F4E1F2F553464005F056F /* Debug */,
+				944F4E202F553464005F056F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		944F4E212F553464005F056F /* Build configuration list for PBXNativeTarget "redredvideoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				944F4E222F553464005F056F /* Debug */,
+				944F4E232F553464005F056F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 944F4DE32F553464005F056F /* Project object */;
+}

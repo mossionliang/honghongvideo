@@ -1,0 +1,6 @@
+framework module LBReplayAppKit {
+  umbrella header "LBReplayAppKit.h"
+  export *
+
+  module * { export * }
+}
