@@ -18,6 +18,8 @@
 #import "RRScreenCastView.h"
 #import "RRScreenCastControlViewController.h"
 #import "RRNavigationHelper.h"
+#import "RRDramaDetailViewController.h"
+#import <Masonry/Masonry.h>
 @class RRHomeFeedCell;
 
 /// 预加载窗口（前后各N个）
@@ -29,11 +31,17 @@ static const NSInteger kPageSize = 10;
 
 #pragma mark - RRHomeFeedCell
 
+@protocol RRHomeFeedCellDelegate <NSObject>
+- (void)homeFeedCellDidTapViewFullDrama:(RRHomeFeedCell *)cell;
+@end
+
 @interface RRHomeFeedCell : UICollectionViewCell <RRPlayerViewDelegate, RRVideoOverlayViewDelegate, RRSeekBarDelegate, RRPlayerMenuViewDelegate, RRScreenCastViewDelegate>
 
+@property (nonatomic, weak) id<RRHomeFeedCellDelegate> delegate;
 @property (nonatomic, strong) RRPlayerView *playerView;
 @property (nonatomic, strong) RRVideoOverlayView *overlayView;
 @property (nonatomic, strong) RRSeekBar *seekBar;
+@property (nonatomic, strong) UIButton *viewFullDramaButton; // 观看完整短剧按钮
 @property (nonatomic, strong) RRVideoModel *videoModel;
 @property (nonatomic, assign) BOOL hasPreloaded;
 @property (nonatomic, assign) BOOL hasStarted; // 是否已经开始播放过
@@ -70,16 +78,54 @@ static const NSInteger kPageSize = 10;
         self.seekBar = [[RRSeekBar alloc] initWithFrame:CGRectZero];
         self.seekBar.delegate = self;
         [self.contentView addSubview:self.seekBar];
+        
+        // 观看完整短剧按钮
+        self.viewFullDramaButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        self.viewFullDramaButton.backgroundColor = [UIColor colorWithWhite:0.2 alpha:0.8];
+        [self.viewFullDramaButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+        self.viewFullDramaButton.titleLabel.font = [UIFont systemFontOfSize:14];
+        [self.viewFullDramaButton addTarget:self action:@selector(viewFullDramaButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        self.viewFullDramaButton.hidden = YES; // 默认隐藏
+        [self.contentView addSubview:self.viewFullDramaButton];
+        
+        // 添加播放图标
+        UIImageView *playIcon = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"play.fill"]];
+        playIcon.tintColor = [UIColor whiteColor];
+        playIcon.tag = 999;
+        [self.viewFullDramaButton addSubview:playIcon];
     }
     return self;
 }
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    CGFloat w = self.contentView.bounds.size.width;
-    CGFloat h = self.contentView.bounds.size.height;
-    CGFloat margin = 20;
-    self.seekBar.frame = CGRectMake(margin, h - 20, w - margin * 2, 20);
+    
+    // 观看完整短剧按钮：左右间距0，底部间距0，高度40，无圆角
+    [self.viewFullDramaButton mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.bottom.equalTo(self.contentView);
+        make.height.mas_equalTo(40);
+    }];
+    
+    // 进度条：左右间距20，底部间距0（和按钮在同一水平位置），高度5，在按钮上层
+    [self.seekBar mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(self.contentView).offset(20);
+        make.right.equalTo(self.contentView).offset(-20);
+        make.bottom.equalTo(self.contentView);
+        make.height.mas_equalTo(5);
+    }];
+    
+    // 确保进度条在按钮上层
+    [self.contentView bringSubviewToFront:self.seekBar];
+    
+    // 播放图标布局
+    UIImageView *playIcon = [self.viewFullDramaButton viewWithTag:999];
+    if (playIcon) {
+        [playIcon mas_remakeConstraints:^(MASConstraintMaker *make) {
+            make.left.equalTo(self.viewFullDramaButton).offset(15);
+            make.centerY.equalTo(self.viewFullDramaButton);
+            make.width.height.mas_equalTo(16);
+        }];
+    }
 }
 
 - (void)configureWithModel:(RRVideoModel *)model {
@@ -89,6 +135,15 @@ static const NSInteger kPageSize = 10;
     [self.overlayView configureWithModel:model];
     self.seekBar.progress = 0;
     self.seekBar.bufferProgress = 0;
+    
+    // 如果有剧集信息且总集数大于1，显示"观看完整短剧"按钮
+    if (model.dramaId > 0 && model.totalEpisodes > 1) {
+        NSString *buttonTitle = [NSString stringWithFormat:@"  观看完整短剧·全%ld集", (long)model.totalEpisodes];
+        [self.viewFullDramaButton setTitle:buttonTitle forState:UIControlStateNormal];
+        self.viewFullDramaButton.hidden = NO;
+    } else {
+        self.viewFullDramaButton.hidden = YES;
+    }
 }
 
 - (void)startPlaying {
@@ -126,6 +181,12 @@ static const NSInteger kPageSize = 10;
     self.seekBar.bufferProgress = 0;
     self.hasPreloaded = NO;
     self.hasStarted = NO;
+}
+
+- (void)viewFullDramaButtonTapped {
+    if ([self.delegate respondsToSelector:@selector(homeFeedCellDidTapViewFullDrama:)]) {
+        [self.delegate homeFeedCellDidTapViewFullDrama:self];
+    }
 }
 
 #pragma mark - RRPlayerViewDelegate
@@ -281,7 +342,7 @@ static const NSInteger kPageSize = 10;
 
 #pragma mark - RRHomeViewController
 
-@interface RRHomeViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RRPlayerViewDelegate, RRPlayerMenuViewDelegate>
+@interface RRHomeViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RRPlayerViewDelegate, RRPlayerMenuViewDelegate, RRHomeFeedCellDelegate>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray<RRVideoModel *> *videoList;
@@ -664,6 +725,7 @@ static const NSInteger kPageSize = 10;
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     RRHomeFeedCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"FeedCell" forIndexPath:indexPath];
+    cell.delegate = self;
     [cell configureWithModel:self.videoList[indexPath.item]];
     return cell;
 }
@@ -691,6 +753,20 @@ static const NSInteger kPageSize = 10;
         [self releaseDistantPlayers];
         [self checkLoadMore];
     }
+}
+
+#pragma mark - RRHomeFeedCellDelegate
+
+- (void)homeFeedCellDidTapViewFullDrama:(RRHomeFeedCell *)cell {
+    RRVideoModel *model = cell.videoModel;
+    if (model.dramaId <= 0) return;
+    
+    NSLog(@"[首页] 点击观看完整短剧，dramaId: %ld", (long)model.dramaId);
+    
+    // 跳转到短剧详情页面
+    RRDramaDetailViewController *detailVC = [[RRDramaDetailViewController alloc] init];
+    detailVC.dramaId = [NSString stringWithFormat:@"%ld", (long)model.dramaId];
+    [self.navigationController pushViewController:detailVC animated:YES];
 }
 
 - (void)dealloc {

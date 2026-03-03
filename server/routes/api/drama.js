@@ -127,19 +127,19 @@ router.get('/feed/videos', (req, res) => {
   const offset = (page - 1) * pageSize;
   const seedNum = parseInt(seed) || Date.now();
 
-  // 排除已看过的ID
+  // 排除已看过的剧ID
   let excludeClause = '';
   const params = [];
   if (exclude) {
     const excludeIds = exclude.split(',').map(Number).filter(n => n > 0);
     if (excludeIds.length > 0) {
-      excludeClause = `AND e.id NOT IN (${excludeIds.map(() => '?').join(',')})`;
+      excludeClause = `AND d.id NOT IN (${excludeIds.map(() => '?').join(',')})`;
       params.push(...excludeIds);
     }
   }
 
-  // 用 seed 对 episode.id 做哈希，生成稳定的伪随机排序
-  // (id * seed) % 大素数 → 每个 seed 产生不同但稳定的排列
+  // 只返回每个剧的第一集（episode_number = 1）
+  // 用 seed 对 drama.id 做哈希，生成稳定的伪随机排序
   const videos = db.prepare(`
     SELECT e.id, e.episode_number, e.title, e.video_url, e.cover_url, e.duration, e.play_count,
            d.id as drama_id, d.title as drama_title, d.author, d.like_count, 
@@ -147,16 +147,23 @@ router.get('/feed/videos', (req, res) => {
     FROM episodes e
     JOIN dramas d ON e.drama_id = d.id
     WHERE e.status = 'published' AND d.status = 'published' AND e.video_url != ''
+    AND e.episode_number = 1
     ${excludeClause}
-    ORDER BY ((e.id * ${seedNum}) % 104729 + (e.id * 31) % 7919) ASC
+    ORDER BY ((d.id * ${seedNum}) % 104729 + (d.id * 31) % 7919) ASC
     LIMIT ? OFFSET ?
   `).all(...params, parseInt(pageSize), offset);
 
   // 总数（用于客户端判断是否还有更多）
   const total = db.prepare(`
-    SELECT COUNT(*) as total FROM episodes e
-    JOIN dramas d ON e.drama_id = d.id
-    WHERE e.status = 'published' AND d.status = 'published' AND e.video_url != ''
+    SELECT COUNT(*) as total FROM dramas d
+    WHERE d.status = 'published'
+    AND EXISTS (
+      SELECT 1 FROM episodes e 
+      WHERE e.drama_id = d.id 
+      AND e.status = 'published' 
+      AND e.video_url != '' 
+      AND e.episode_number = 1
+    )
     ${excludeClause}
   `).get(...params).total;
 

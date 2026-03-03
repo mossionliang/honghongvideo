@@ -78,6 +78,12 @@ static const CGFloat kThumbSize = 12.0;
     [pan requireGestureRecognizerToFail:tap];
 }
 
+// 扩大点击区域，即使高度只有5，也能轻松点击
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    CGRect expandedBounds = CGRectInset(self.bounds, 0, -20); // 上下各扩大20
+    return CGRectContainsPoint(expandedBounds, point);
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     [self updateBarLayout];
@@ -87,7 +93,7 @@ static const CGFloat kThumbSize = 12.0;
     CGFloat w = self.bounds.size.width;
     CGFloat h = self.bounds.size.height;
     CGFloat barH = self.currentBarHeight;
-    CGFloat barY = (h - barH) / 2;
+    CGFloat barY = h - barH; // 贴底
     
     self.trackView.frame = CGRectMake(0, barY, w, barH);
     self.trackView.layer.cornerRadius = barH / 2;
@@ -209,12 +215,6 @@ static const CGFloat kThumbSize = 12.0;
             [self collapseBar];
         }
     }
-}
-
-// 扩大触摸区域
-- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    CGRect hitArea = CGRectInset(self.bounds, 0, -15);
-    return CGRectContainsPoint(hitArea, point);
 }
 
 @end

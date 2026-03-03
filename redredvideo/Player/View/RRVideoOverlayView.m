@@ -142,9 +142,9 @@
     self.shareButton.frame = CGRectMake(btnX, btnStartY + btnSpacing * 2, btnSize, btnSize);
     self.shareLabel.frame = CGRectMake(btnX, btnStartY + btnSpacing * 2 + btnSize, btnSize, 18);
     
-    // 底部文字
+    // 底部文字（往上移，避免被"观看完整短剧"按钮遮挡）
     CGFloat textMaxW = w - btnSize - rightMargin - 32;
-    CGFloat bottomY = h - 92;
+    CGFloat bottomY = h - 140; // 给按钮留出空间（按钮高度40 + 间距）
     
     self.authorLabel.frame = CGRectMake(16, bottomY, textMaxW, 22);
     self.titleLabel.frame = CGRectMake(16, bottomY + 24, textMaxW, 20);
