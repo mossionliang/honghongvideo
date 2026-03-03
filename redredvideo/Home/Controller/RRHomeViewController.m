@@ -36,11 +36,14 @@ static const NSInteger kPageSize = 10;
 @property (nonatomic, strong) RRSeekBar *seekBar;
 @property (nonatomic, strong) RRVideoModel *videoModel;
 @property (nonatomic, assign) BOOL hasPreloaded;
+@property (nonatomic, assign) BOOL hasStarted; // 是否已经开始播放过
 @property (nonatomic, assign) float currentSpeed;
 
 - (void)configureWithModel:(RRVideoModel *)model;
 - (void)startPlaying;
 - (void)stopPlaying;
+- (void)pausePlaying;
+- (void)resumePlaying;
 - (void)preload;
 
 @end
@@ -82,6 +85,7 @@ static const NSInteger kPageSize = 10;
 - (void)configureWithModel:(RRVideoModel *)model {
     self.videoModel = model;
     self.hasPreloaded = NO;
+    self.hasStarted = NO;
     [self.overlayView configureWithModel:model];
     self.seekBar.progress = 0;
     self.seekBar.bufferProgress = 0;
@@ -91,6 +95,7 @@ static const NSInteger kPageSize = 10;
     if (self.videoModel.videoUrl.length == 0) return;
     NSURL *url = [NSURL URLWithString:self.videoModel.videoUrl];
     [self.playerView loadVideoWithURL:url];
+    self.hasStarted = YES;
 }
 
 - (void)preload {
@@ -103,6 +108,15 @@ static const NSInteger kPageSize = 10;
 - (void)stopPlaying {
     [self.playerView stop];
     self.hasPreloaded = NO;
+    self.hasStarted = NO;
+}
+
+- (void)pausePlaying {
+    [self.playerView pause];
+}
+
+- (void)resumePlaying {
+    [self.playerView play];
 }
 
 - (void)prepareForReuse {
@@ -111,6 +125,7 @@ static const NSInteger kPageSize = 10;
     self.seekBar.progress = 0;
     self.seekBar.bufferProgress = 0;
     self.hasPreloaded = NO;
+    self.hasStarted = NO;
 }
 
 #pragma mark - RRPlayerViewDelegate
@@ -310,7 +325,15 @@ static const NSInteger kPageSize = 10;
     
     if (self.videoList.count > 0) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [self playVideoAtIndex:self.currentIndex];
+            // 检查当前 cell 是否已经开始播放过
+            RRHomeFeedCell *cell = (RRHomeFeedCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:self.currentIndex inSection:0]];
+            if (cell && cell.hasStarted) {
+                // 如果已经开始播放过，只需要恢复播放
+                [self resumeVideoAtIndex:self.currentIndex];
+            } else {
+                // 如果还没有开始播放，开始播放
+                [self playVideoAtIndex:self.currentIndex];
+            }
             [self preloadAroundIndex:self.currentIndex];
         });
     }
@@ -318,7 +341,8 @@ static const NSInteger kPageSize = 10;
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [self stopVideoAtIndex:self.currentIndex];
+    // 暂停播放而不是停止，保留播放进度
+    [self pauseVideoAtIndex:self.currentIndex];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -572,6 +596,18 @@ static const NSInteger kPageSize = 10;
     if (index < 0 || index >= self.videoList.count) return;
     RRHomeFeedCell *cell = (RRHomeFeedCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
     [cell stopPlaying];
+}
+
+- (void)pauseVideoAtIndex:(NSInteger)index {
+    if (index < 0 || index >= self.videoList.count) return;
+    RRHomeFeedCell *cell = (RRHomeFeedCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    [cell pausePlaying];
+}
+
+- (void)resumeVideoAtIndex:(NSInteger)index {
+    if (index < 0 || index >= self.videoList.count) return;
+    RRHomeFeedCell *cell = (RRHomeFeedCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    [cell resumePlaying];
 }
 
 - (void)preloadAroundIndex:(NSInteger)index {
