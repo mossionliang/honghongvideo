@@ -9,7 +9,10 @@
 #import "RRScreenCastManager.h"
 #import "RRScreenCastView.h"
 #import "RREpisodePanelView.h"
+#import "RRScreenCastFloatingButton.h"
 #import <Masonry/Masonry.h>
+
+static RRScreenCastControlViewController *_currentInstance = nil;
 
 @interface RRScreenCastControlViewController () <RRScreenCastManagerDelegate, RRScreenCastViewDelegate, RREpisodePanelViewDelegate>
 
@@ -48,6 +51,10 @@
 @end
 
 @implementation RRScreenCastControlViewController
+
++ (instancetype)currentInstance {
+    return _currentInstance;
+}
 
 - (instancetype)initWithDeviceName:(NSString *)deviceName videoURL:(NSString *)videoURL videoTitle:(NSString *)title {
     self = [super init];
@@ -93,6 +100,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    // 保存当前实例
+    _currentInstance = self;
+    
     // 深色背景
     self.view.backgroundColor = [UIColor colorWithWhite:0.1 alpha:1.0];
     self.title = @"投屏控制";
@@ -108,6 +118,34 @@
     // 推送视频
     if (self.videoURL.length > 0) {
         [[RRScreenCastManager shared] playVideoWithURL:self.videoURL title:self.videoTitle];
+    }
+}
+
+- (void)dealloc {
+    // 清除实例引用
+    if (_currentInstance == self) {
+        _currentInstance = nil;
+    }
+    NSLog(@"[投屏控制] dealloc");
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
+    // 确保导航栏显示
+    self.navigationController.navigationBarHidden = NO;
+    
+    // 进入投屏控制页面时，隐藏悬浮按钮
+    [[RRScreenCastFloatingButton sharedButton] hide];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    
+    // 离开投屏控制页面时，显示悬浮按钮
+    // 但需要检查是否还在投屏状态
+    if ([RRScreenCastManager shared].isConnected) {
+        [[RRScreenCastFloatingButton sharedButton] show];
     }
 }
 
@@ -510,6 +548,9 @@
 - (void)disconnect {
     [[RRScreenCastManager shared] disconnect];
     
+    // 断开连接时隐藏悬浮按钮
+    [[RRScreenCastFloatingButton sharedButton] hide];
+    
     if (self.navigationController.viewControllers.count > 1) {
         [self.navigationController popViewControllerAnimated:YES];
     } else {
@@ -559,6 +600,9 @@
 
 - (void)screenCastDidDisconnect:(LBLelinkService *)service {
     NSLog(@"[投屏控制] 连接已断开");
+    
+    // 隐藏悬浮按钮
+    [[RRScreenCastFloatingButton sharedButton] hide];
     
     // 自动退出页面
     if (self.navigationController.viewControllers.count > 1) {

@@ -11,6 +11,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RRScreenCastControlViewController : UIViewController
 
+/// 获取当前实例（如果存在）
++ (nullable instancetype)currentInstance;
+
 /// 初始化，传入设备名、视频URL和标题
 - (instancetype)initWithDeviceName:(NSString *)deviceName videoURL:(NSString *)videoURL videoTitle:(nullable NSString *)title;
 

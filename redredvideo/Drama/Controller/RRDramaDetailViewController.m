@@ -56,6 +56,7 @@
 @property (nonatomic, strong) NSArray<NSArray *> *episodeRanges; // 分组后的分集
 @property (nonatomic, strong) NSMutableArray<UIButton *> *rangeButtons;
 @property (nonatomic, assign) float currentSpeed;
+@property (nonatomic, assign) BOOL isScreenCasting; // 是否正在投屏
 
 @end
 
@@ -83,11 +84,33 @@ static const NSInteger kEpisodesPerRange = 30;
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     self.navigationController.navigationBarHidden = YES;
+    
+    // 从投屏控制页面返回时，恢复播放
+    if (self.isScreenCasting) {
+        [self.playerView play];
+        NSLog(@"[短剧详情] 从投屏控制页面返回，恢复播放");
+    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [self.playerView stop];
+    
+    // 如果是去投屏控制页面，不停止播放
+    // 如果是返回首页等其他页面，停止播放并重置投屏标志
+    if (!self.isScreenCasting) {
+        [self.playerView stop];
+    } else {
+        // 检查是否是真正退出（返回首页），而不是去投屏控制页面
+        // 通过检查 navigationController 的 viewControllers 数组
+        if (self.navigationController && 
+            ![self.navigationController.viewControllers containsObject:self]) {
+            // 正在被 pop 出栈，说明是真正退出
+            [self.playerView stop];
+            self.isScreenCasting = NO;
+            NSLog(@"[短剧详情] 退出页面，停止播放并重置投屏标志");
+        }
+    }
+    
     self.navigationController.navigationBarHidden = NO;
 }
 
@@ -598,6 +621,11 @@ static const NSInteger kEpisodesPerRange = 30;
 #pragma mark - RRScreenCastViewDelegate
 
 - (void)screenCastViewDidConnect:(NSString *)deviceName videoURL:(NSString *)videoURL videoTitle:(NSString *)title {
+    // 设置投屏标志
+    self.isScreenCasting = YES;
+    
+    // 不暂停本地播放，投屏和本地播放独立
+    
     // 传入剧集列表和当前集数
     NSString *dramaTitle = self.dramaData[@"title"] ?: @"";
     RRScreenCastControlViewController *controlVC = [[RRScreenCastControlViewController alloc] 
