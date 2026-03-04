@@ -87,5 +87,10 @@
     // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
 }
 
+// 控制屏幕旋转：只支持竖屏
+- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
+    return UIInterfaceOrientationMaskPortrait;
+}
+
 
 @end

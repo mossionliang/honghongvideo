@@ -100,10 +100,10 @@ static const NSInteger kPageSize = 10;
 - (void)layoutSubviews {
     [super layoutSubviews];
     
-    // 观看完整短剧按钮：左右间距0，底部间距0，高度40，无圆角
+    // 观看完整短剧按钮：左右间距0，底部间距0，高度50，无圆角
     [self.viewFullDramaButton mas_remakeConstraints:^(MASConstraintMaker *make) {
         make.left.right.bottom.equalTo(self.contentView);
-        make.height.mas_equalTo(40);
+        make.height.mas_equalTo(50);
     }];
     
     // 进度条：左右间距20，底部间距0（和按钮在同一水平位置），高度5，在按钮上层

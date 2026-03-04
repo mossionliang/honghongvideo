@@ -79,22 +79,21 @@ static const CGFloat kThumbSize = 12.0;
 }
 
 - (void)setupGestures {
+    // 使用 UIPanGestureRecognizer 处理所有拖动和点击
     UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
+    pan.maximumNumberOfTouches = 1;
+    pan.minimumNumberOfTouches = 1;
+    // 不限制方向，允许任意方向滑动
     [self addGestureRecognizer:pan];
-    
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
-    [self addGestureRecognizer:tap];
     
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
     longPress.minimumPressDuration = 0.05; // 快速响应
     [self addGestureRecognizer:longPress];
-    
-    [pan requireGestureRecognizerToFail:tap];
 }
 
 // 扩大点击区域，即使高度只有5，也能轻松点击
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
-    CGRect expandedBounds = CGRectInset(self.bounds, 0, -20); // 上下各扩大20
+    CGRect expandedBounds = CGRectInset(self.bounds, 0, -10); // 上下各扩大10
     return CGRectContainsPoint(expandedBounds, point);
 }
 
@@ -204,52 +203,46 @@ static const CGFloat kThumbSize = 12.0;
     return MAX(0, MIN(1, p));
 }
 
-- (void)handleTap:(UITapGestureRecognizer *)gesture {
-    CGPoint loc = [gesture locationInView:self];
-    float p = [self progressForLocation:loc];
-    _progress = p;
-    [self updateBarLayout];
-    
-    // 短暂展示圆点
-    [self expandBar];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!self.isDragging) {
-            [self collapseBar];
-        }
-    });
-    
-    if ([self.delegate respondsToSelector:@selector(seekBar:didEndSeekAtProgress:)]) {
-        [self.delegate seekBar:self didEndSeekAtProgress:p];
-    }
-}
-
 - (void)handlePan:(UIPanGestureRecognizer *)gesture {
     CGPoint loc = [gesture locationInView:self];
     float p = [self progressForLocation:loc];
     
     switch (gesture.state) {
-        case UIGestureRecognizerStateBegan:
+        case UIGestureRecognizerStateBegan: {
             self.isDragging = YES;
             [self expandBar];
             if ([self.delegate respondsToSelector:@selector(seekBarDidBeginDragging:)]) {
                 [self.delegate seekBarDidBeginDragging:self];
             }
-            // fall through
-        case UIGestureRecognizerStateChanged:
+            // 立即更新进度（点击时立即跳转）
             _progress = p;
             [self updateBarLayout];
             if ([self.delegate respondsToSelector:@selector(seekBar:didSeekToProgress:)]) {
                 [self.delegate seekBar:self didSeekToProgress:p];
             }
             break;
+        }
+        case UIGestureRecognizerStateChanged: {
+            // 持续更新进度，不管是往前还是往后
+            _progress = p;
+            [self updateBarLayout];
+            if ([self.delegate respondsToSelector:@selector(seekBar:didSeekToProgress:)]) {
+                [self.delegate seekBar:self didSeekToProgress:p];
+            }
+            break;
+        }
         case UIGestureRecognizerStateEnded:
-        case UIGestureRecognizerStateCancelled:
+        case UIGestureRecognizerStateCancelled: {
             self.isDragging = NO;
+            // 最后一次更新进度
+            _progress = p;
+            [self updateBarLayout];
             [self collapseBar];
             if ([self.delegate respondsToSelector:@selector(seekBar:didEndSeekAtProgress:)]) {
                 [self.delegate seekBar:self didEndSeekAtProgress:p];
             }
             break;
+        }
         default:
             break;
     }

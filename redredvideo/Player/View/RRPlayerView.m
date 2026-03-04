@@ -93,9 +93,9 @@ static void *kBufferFullContext = &kBufferFullContext;
     [self.retryButton addTarget:self action:@selector(retry) forControlEvents:UIControlEventTouchUpInside];
     [self addSubview:self.retryButton];
     
-    // 长按手势（3秒）— 必须在 tap 之前添加
+    // 长按手势（2秒）— 必须在 tap 之前添加
     UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
-    longPress.minimumPressDuration = 3.0;
+    longPress.minimumPressDuration = 2.0;
     longPress.allowableMovement = 20; // 允许轻微移动
     [self addGestureRecognizer:longPress];
     
