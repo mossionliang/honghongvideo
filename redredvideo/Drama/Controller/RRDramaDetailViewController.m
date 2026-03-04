@@ -636,7 +636,7 @@ static const NSInteger kEpisodesPerRange = 30;
         NSDictionary *ep = self.episodes[globalIndex];
         NSInteger epNum = [ep[@"episode_number"] integerValue];
         BOOL isPlaying = (globalIndex == self.currentEpisodeIndex);
-        BOOL isFree = [ep[@"is_free"] boolValue];
+        BOOL isFree = [ep[@"is_free"] isKindOfClass:[NSNumber class]] ? [ep[@"is_free"] boolValue] : NO;
         [cell configureWithNumber:epNum isPlaying:isPlaying isFree:isFree];
     }
     

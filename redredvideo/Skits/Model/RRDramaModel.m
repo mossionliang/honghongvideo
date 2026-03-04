@@ -23,9 +23,9 @@
     model.score = [dict[@"score"] floatValue];
     model.hotCount = [dict[@"hot_count"] integerValue];
     model.playCount = [dict[@"play_count"] integerValue];
-    model.isVip = [dict[@"is_vip"] boolValue];
-    model.isFree = [dict[@"is_free"] boolValue];
-    model.isFinished = [dict[@"is_finished"] boolValue];
+    model.isVip = [dict[@"is_vip"] isKindOfClass:[NSNumber class]] ? [dict[@"is_vip"] boolValue] : NO;
+    model.isFree = [dict[@"is_free"] isKindOfClass:[NSNumber class]] ? [dict[@"is_free"] boolValue] : NO;
+    model.isFinished = [dict[@"is_finished"] isKindOfClass:[NSNumber class]] ? [dict[@"is_finished"] boolValue] : NO;
     return model;
 }
 
