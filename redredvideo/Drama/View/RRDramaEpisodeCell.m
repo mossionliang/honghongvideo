@@ -218,6 +218,10 @@
     // 可以在这里处理播放状态变化
 }
 
+- (void)playerView:(id)playerView isLoading:(BOOL)loading {
+    self.seekBar.isLoading = loading;
+}
+
 #pragma mark - RRSeekBarDelegate
 
 - (void)seekBarDidBeginDragging:(id)seekBar {

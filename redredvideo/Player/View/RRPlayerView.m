@@ -49,6 +49,13 @@ static void *kBufferFullContext = &kBufferFullContext;
 }
 
 - (void)setupUI {
+    // 预先创建 playerLayer，避免后续创建时闪烁
+    self.playerLayer = [AVPlayerLayer layer];
+    self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
+    self.playerLayer.backgroundColor = [UIColor blackColor].CGColor;
+    self.playerLayer.frame = self.bounds;
+    [self.layer insertSublayer:self.playerLayer atIndex:0];
+    
     // Loading
     self.loadingView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
     self.loadingView.color = [UIColor whiteColor];
@@ -133,9 +140,20 @@ static void *kBufferFullContext = &kBufferFullContext;
         }
         
         if (newState == RRPlayerStateLoading || newState == RRPlayerStateBuffering) {
-            [self.loadingView startAnimating];
+            // 不显示菊花转 loading，改为在进度条上显示加载动画
+            // [self.loadingView startAnimating];
+            
+            // 通知代理显示加载动画
+            if ([self.delegate respondsToSelector:@selector(playerView:isLoading:)]) {
+                [self.delegate playerView:self isLoading:YES];
+            }
         } else {
             [self.loadingView stopAnimating];
+            
+            // 通知代理隐藏加载动画
+            if ([self.delegate respondsToSelector:@selector(playerView:isLoading:)]) {
+                [self.delegate playerView:self isLoading:NO];
+            }
         }
         
         if ([self.delegate respondsToSelector:@selector(playerView:stateChanged:)]) {
@@ -159,10 +177,11 @@ static void *kBufferFullContext = &kBufferFullContext;
 }
 
 - (void)setupPlayerWithURL:(NSURL *)url {
-    [self cleanup];
-    
     self.currentURL = url;
     [self updateState:RRPlayerStateLoading];
+    
+    // 隐藏 playerLayer，避免显示黑屏或旧画面
+    self.playerLayer.opacity = 0;
     
     // 通过 KTVHTTPCache 代理URL（边播边缓存）
     NSURL *proxyURL = [KTVHTTPCache proxyURLWithOriginalURL:url];
@@ -170,16 +189,21 @@ static void *kBufferFullContext = &kBufferFullContext;
     NSLog(@"[RRPlayerView] 代理URL: %@", proxyURL);
     
     // 创建带缓冲配置的 PlayerItem
-    self.playerItem = [AVPlayerItem playerItemWithURL:proxyURL];
-    self.playerItem.preferredForwardBufferDuration = 5.0; // 预缓冲5秒
+    AVPlayerItem *newItem = [AVPlayerItem playerItemWithURL:proxyURL];
+    newItem.preferredForwardBufferDuration = 5.0; // 预缓冲5秒
     
-    self.player = [AVPlayer playerWithPlayerItem:self.playerItem];
-    self.player.automaticallyWaitsToMinimizeStalling = YES;
+    AVPlayer *newPlayer = [AVPlayer playerWithPlayerItem:newItem];
+    newPlayer.automaticallyWaitsToMinimizeStalling = YES;
     
-    self.playerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
-    self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-    self.playerLayer.frame = self.bounds;
-    [self.layer insertSublayer:self.playerLayer atIndex:0];
+    // 先设置新的 player，避免黑屏或显示旧画面
+    self.playerLayer.player = newPlayer;
+    
+    // 然后清理旧的资源
+    [self cleanup];
+    
+    // 保存新的 player 和 item
+    self.player = newPlayer;
+    self.playerItem = newItem;
     
     // KVO 观察
     [self.playerItem addObserver:self forKeyPath:@"status" options:NSKeyValueObservingOptionNew context:kStatusContext];
@@ -217,6 +241,9 @@ static void *kBufferFullContext = &kBufferFullContext;
     self.isPlaying = YES;
     [self updateState:RRPlayerStatePlaying];
     [self hidePauseIcon];
+    
+    // 显示 playerLayer（视频开始播放）
+    self.playerLayer.opacity = 1.0;
 }
 
 - (void)pause {
@@ -466,8 +493,8 @@ static void *kBufferFullContext = &kBufferFullContext;
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    [self.playerLayer removeFromSuperlayer];
-    self.playerLayer = nil;
+    // 不清空 playerLayer.player，因为在 setupPlayerWithURL 中已经设置了新的 player
+    // 这样可以避免短暂的黑屏或显示旧画面
     self.player = nil;
     self.playerItem = nil;
 }

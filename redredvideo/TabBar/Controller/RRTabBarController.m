@@ -164,17 +164,7 @@
     RRSkitsViewController *skitsVC = [[RRSkitsViewController alloc] init];
     UINavigationController *skitsNav = [self wrapInNav:skitsVC];
     
-    UIViewController *followVC = [[UIViewController alloc] init];
-    followVC.view.backgroundColor = [UIColor colorWithRed:0.06 green:0.06 blue:0.08 alpha:1.0];
-    followVC.navigationItem.title = @"追剧";
-    UINavigationController *followNav = [self wrapInNav:followVC];
-    
-    UIViewController *profileVC = [[UIViewController alloc] init];
-    profileVC.view.backgroundColor = [UIColor colorWithRed:0.06 green:0.06 blue:0.08 alpha:1.0];
-    profileVC.navigationItem.title = @"我的";
-    UINavigationController *profileNav = [self wrapInNav:profileVC];
-    
-    self.viewControllers = @[homeNav, skitsNav, followNav, profileNav];
+    self.viewControllers = @[homeNav, skitsNav];
 }
 
 - (UINavigationController *)wrapInNav:(UIViewController *)vc {
@@ -200,8 +190,6 @@
     [self.customTabBar setupWithItems:@[
         @{@"title": @"首页", @"icon": @"house.fill"},
         @{@"title": @"短剧", @"icon": @"play.rectangle.fill"},
-        @{@"title": @"追剧", @"icon": @"heart.fill"},
-        @{@"title": @"我的", @"icon": @"person.fill"},
     ]];
     
     __weak typeof(self) weakSelf = self;

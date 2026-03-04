@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak) id<RRCategoryBarViewDelegate> delegate;
 @property (nonatomic, copy) NSArray<RRCategoryModel *> *categories;
+@property (nonatomic, copy) NSString *selectedCategoryId; // 当前选中的分类ID
 
 @end
 

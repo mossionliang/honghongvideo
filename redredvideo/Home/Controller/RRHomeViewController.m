@@ -23,7 +23,7 @@
 @class RRHomeFeedCell;
 
 /// 预加载窗口（前后各N个）
-static const NSInteger kPreloadWindow = 1;
+static const NSInteger kPreloadWindow = 2;
 /// 触发加载更多的阈值
 static const NSInteger kLoadMoreThreshold = 3;
 /// 每页加载数量
@@ -220,6 +220,10 @@ static const NSInteger kPageSize = 10;
     }
 }
 
+- (void)playerView:(id)playerView isLoading:(BOOL)loading {
+    self.seekBar.isLoading = loading;
+}
+
 #pragma mark - RRVideoOverlayViewDelegate
 
 - (void)overlayViewDidTapLike:(id)overlayView {}
@@ -353,6 +357,9 @@ static const NSInteger kPageSize = 10;
 @property (nonatomic, assign) uint32_t feedSeed;       // 随机种子，保证翻页不重复
 @property (nonatomic, strong) UILabel *networkBanner;
 @property (nonatomic, strong) UIActivityIndicatorView *loadingIndicator;
+@property (nonatomic, strong) UIView *errorView;       // 失败页面
+@property (nonatomic, strong) UILabel *errorLabel;
+@property (nonatomic, strong) UIButton *retryButton;
 
 @end
 
@@ -374,7 +381,9 @@ static const NSInteger kPageSize = 10;
     [self setupCollectionView];
     [self setupNetworkBanner];
     [self setupLoadingIndicator];
+    [self setupErrorView];
     [self setupNotifications];
+    [self setupNetworkMonitoring];
     
     // 从 API 加载首页数据
     [self loadFeedFromAPI];
@@ -480,6 +489,70 @@ static const NSInteger kPageSize = 10;
     [self.view addSubview:self.loadingIndicator];
 }
 
+- (void)setupErrorView {
+    CGFloat w = self.view.bounds.size.width;
+    CGFloat h = self.view.bounds.size.height;
+    
+    self.errorView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+    self.errorView.backgroundColor = [UIColor blackColor];
+    self.errorView.hidden = YES;
+    [self.view addSubview:self.errorView];
+    
+    // 错误图标
+    UIImageView *errorIcon = [[UIImageView alloc] init];
+    UIImage *icon = [UIImage systemImageNamed:@"wifi.slash" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:60 weight:UIFontWeightLight]];
+    errorIcon.image = icon;
+    errorIcon.tintColor = [UIColor colorWithWhite:0.4 alpha:1.0];
+    errorIcon.frame = CGRectMake((w - 80) / 2, h / 2 - 120, 80, 80);
+    [self.errorView addSubview:errorIcon];
+    
+    // 错误文字
+    self.errorLabel = [[UILabel alloc] init];
+    self.errorLabel.text = @"网络连接失败";
+    self.errorLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+    self.errorLabel.font = [UIFont systemFontOfSize:16];
+    self.errorLabel.textAlignment = NSTextAlignmentCenter;
+    self.errorLabel.frame = CGRectMake(20, h / 2 - 20, w - 40, 24);
+    [self.errorView addSubview:self.errorLabel];
+    
+    // 重试按钮
+    self.retryButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.retryButton setTitle:@"点击重试" forState:UIControlStateNormal];
+    [self.retryButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    self.retryButton.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
+    self.retryButton.backgroundColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0];
+    self.retryButton.layer.cornerRadius = 22;
+    self.retryButton.frame = CGRectMake((w - 120) / 2, h / 2 + 20, 120, 44);
+    [self.retryButton addTarget:self action:@selector(retryLoadFeed) forControlEvents:UIControlEventTouchUpInside];
+    [self.errorView addSubview:self.retryButton];
+}
+
+- (void)setupNetworkMonitoring {
+    // 使用 SCNetworkReachability 监听网络状态变化（兼容性更好）
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    __weak typeof(self) weakSelf = self;
+    
+    // 每5秒检查一次网络状态（如果当前显示错误页面）
+    [self scheduleNetworkCheck];
+}
+
+- (void)scheduleNetworkCheck {
+    __weak typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) return;
+        
+        // 如果当前显示错误页面，尝试重新请求
+        if (!self.errorView.hidden && self.videoList.count == 0) {
+            NSLog(@"[Feed] 定时检查网络，尝试重新加载");
+            [self retryLoadFeed];
+        } else if (!self.errorView.hidden) {
+            // 继续检查
+            [self scheduleNetworkCheck];
+        }
+    });
+}
+
 - (void)setupNotifications {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(appDidBecomeActive)
@@ -489,6 +562,15 @@ static const NSInteger kPageSize = 10;
                                              selector:@selector(appDidEnterBackground)
                                                  name:UIApplicationDidEnterBackgroundNotification
                                                object:nil];
+}
+
+- (void)retryLoadFeed {
+    self.errorView.hidden = YES;
+    self.currentPage = 1;
+    self.feedSeed = arc4random();
+    [self.videoList removeAllObjects];
+    [self.collectionView reloadData];
+    [self loadFeedFromAPI];
 }
 
 #pragma mark - API 数据加载
@@ -512,7 +594,11 @@ static const NSInteger kPageSize = 10;
         NSInteger code = [resp[@"code"] integerValue];
         if (code != 0) {
             NSLog(@"[Feed] API error code: %ld", (long)code);
-            [self fallbackToMockData];
+            // API 返回错误码，显示错误页面
+            if (self.videoList.count == 0) {
+                self.errorView.hidden = NO;
+            }
+            [self.loadingIndicator stopAnimating];
             return;
         }
         
@@ -548,6 +634,7 @@ static const NSInteger kPageSize = 10;
         
         self.isLoadingMore = NO;
         self.networkBanner.hidden = YES;
+        self.errorView.hidden = YES;
         
     } failure:^(NSError *error) {
         __strong typeof(weakSelf) self = weakSelf;
@@ -558,24 +645,14 @@ static const NSInteger kPageSize = 10;
         
         NSLog(@"[Feed] Network error: %@", error.localizedDescription);
         
-        // 首次加载失败，fallback 到 mock 数据
+        // 首次加载失败，显示错误页面
         if (self.videoList.count == 0) {
-            [self fallbackToMockData];
+            self.errorView.hidden = NO;
+        } else {
+            // 加载更多失败，显示网络提示
+            [self showNetworkError];
         }
-        
-        // 显示网络提示
-        [self showNetworkError];
     }];
-}
-
-- (void)fallbackToMockData {
-    NSLog(@"[Feed] 使用本地 mock 数据");
-    [self.videoList addObjectsFromArray:[RRVideoModel mockVideos]];
-    [self.collectionView reloadData];
-    
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self playVideoAtIndex:0];
-    });
 }
 
 - (void)showNetworkError {
@@ -637,10 +714,13 @@ static const NSInteger kPageSize = 10;
     } failure:^(NSError *error) {
         __strong typeof(weakSelf) self = weakSelf;
         [self.collectionView.mj_header endRefreshing];
-        [self showNetworkError];
         
         if (self.videoList.count == 0) {
-            [self fallbackToMockData];
+            // 刷新失败且没有数据，显示错误页面
+            self.errorView.hidden = NO;
+        } else {
+            // 刷新失败但有旧数据，显示网络提示
+            [self showNetworkError];
         }
     }];
 }
@@ -723,6 +803,23 @@ static const NSInteger kPageSize = 10;
     return self.videoList.count;
 }
 
+- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath {
+    RRHomeFeedCell *feedCell = (RRHomeFeedCell *)cell;
+    
+    // 如果是当前播放的 cell，开始播放
+    if (indexPath.item == self.currentIndex) {
+        if (!feedCell.hasStarted) {
+            [feedCell startPlaying];
+        }
+    } else {
+        // 如果是相邻的 cell，预加载
+        NSInteger distance = labs(indexPath.item - self.currentIndex);
+        if (distance <= kPreloadWindow && !feedCell.hasPreloaded && !feedCell.hasStarted) {
+            [feedCell preload];
+        }
+    }
+}
+
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     RRHomeFeedCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"FeedCell" forIndexPath:indexPath];
     cell.delegate = self;
@@ -738,6 +835,26 @@ static const NSInteger kPageSize = 10;
 
 #pragma mark - UIScrollViewDelegate
 
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGFloat pageH = scrollView.bounds.size.height;
+    if (pageH <= 0) return;
+    
+    // 计算当前滚动到的位置（可能在两个 cell 之间）
+    CGFloat currentOffset = scrollView.contentOffset.y;
+    NSInteger currentPage = (NSInteger)(currentOffset / pageH);
+    NSInteger nextPage = currentPage + 1;
+    
+    // 预加载当前页和下一页的视频
+    for (NSInteger i = currentPage - 1; i <= nextPage + 1; i++) {
+        if (i < 0 || i >= self.videoList.count) continue;
+        
+        RRHomeFeedCell *cell = (RRHomeFeedCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:i inSection:0]];
+        if (cell && !cell.hasPreloaded && !cell.hasStarted) {
+            [cell preload];
+        }
+    }
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
     CGFloat pageH = scrollView.bounds.size.height;
     if (pageH <= 0) return;
@@ -748,8 +865,14 @@ static const NSInteger kPageSize = 10;
     if (newIndex != self.currentIndex) {
         [self stopVideoAtIndex:self.currentIndex];
         self.currentIndex = newIndex;
-        [self playVideoAtIndex:newIndex];
-        [self preloadAroundIndex:newIndex];
+        
+        // 播放新视频（willDisplayCell 会处理，这里不需要重复调用）
+        // 但为了保险起见，检查一下 cell 是否已经开始播放
+        RRHomeFeedCell *cell = (RRHomeFeedCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:newIndex inSection:0]];
+        if (cell && !cell.hasStarted) {
+            [cell startPlaying];
+        }
+        
         [self releaseDistantPlayers];
         [self checkLoadMore];
     }

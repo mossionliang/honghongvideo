@@ -29,6 +29,7 @@ typedef NS_ENUM(NSInteger, RRPlayerState) {
 - (void)playerView:(id)playerView stateChanged:(RRPlayerState)state;
 - (void)playerView:(id)playerView playProgress:(float)progress currentTime:(NSTimeInterval)current totalTime:(NSTimeInterval)total;
 - (void)playerView:(id)playerView bufferProgress:(float)progress;
+- (void)playerView:(id)playerView isLoading:(BOOL)loading; // 新增：通知加载状态
 @end
 
 @interface RRPlayerView : UIView

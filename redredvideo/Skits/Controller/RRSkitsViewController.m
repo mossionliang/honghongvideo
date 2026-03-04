@@ -33,6 +33,11 @@
 @property (nonatomic, assign) BOOL isLoading;
 @property (nonatomic, copy) NSString *selectedCategoryId;  // 当前选中分类，nil或"0"=全部
 
+// 失败页面
+@property (nonatomic, strong) UIView *errorView;
+@property (nonatomic, strong) UILabel *errorLabel;
+@property (nonatomic, strong) UIButton *retryButton;
+
 @end
 
 static NSString * const kVerticalCellId = @"VerticalCell";
@@ -58,6 +63,8 @@ static NSString * const kCategoryCellId = @"CategoryCell";
     
     [self setupNavigation];
     [self setupCollectionView];
+    [self setupErrorView];
+    [self setupNetworkMonitoring];
     
     // 加载分类 + 剧集
     [self fetchCategories];
@@ -68,13 +75,6 @@ static NSString * const kCategoryCellId = @"CategoryCell";
 
 - (void)setupNavigation {
     self.navigationItem.title = @"短剧";
-    
-    UIBarButtonItem *searchBtn = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"magnifyingglass"]
-                                                                 style:UIBarButtonItemStylePlain
-                                                                target:self
-                                                                action:@selector(searchTapped)];
-    searchBtn.tintColor = [UIColor whiteColor];
-    self.navigationItem.rightBarButtonItem = searchBtn;
 }
 
 - (void)setupCollectionView {
@@ -120,6 +120,75 @@ static NSString * const kCategoryCellId = @"CategoryCell";
     self.collectionView.mj_footer.hidden = YES;
 }
 
+- (void)setupErrorView {
+    CGFloat w = self.view.bounds.size.width;
+    CGFloat h = self.view.bounds.size.height;
+    
+    self.errorView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+    self.errorView.backgroundColor = [UIColor colorWithRed:0.06 green:0.06 blue:0.08 alpha:1.0];
+    self.errorView.hidden = YES;
+    [self.view addSubview:self.errorView];
+    
+    // 错误图标
+    UIImageView *errorIcon = [[UIImageView alloc] init];
+    UIImage *icon = [UIImage systemImageNamed:@"wifi.slash" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:60 weight:UIFontWeightLight]];
+    errorIcon.image = icon;
+    errorIcon.tintColor = [UIColor colorWithWhite:0.4 alpha:1.0];
+    errorIcon.frame = CGRectMake((w - 80) / 2, h / 2 - 120, 80, 80);
+    [self.errorView addSubview:errorIcon];
+    
+    // 错误文字
+    self.errorLabel = [[UILabel alloc] init];
+    self.errorLabel.text = @"网络连接失败";
+    self.errorLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+    self.errorLabel.font = [UIFont systemFontOfSize:16];
+    self.errorLabel.textAlignment = NSTextAlignmentCenter;
+    self.errorLabel.frame = CGRectMake(20, h / 2 - 20, w - 40, 24);
+    [self.errorView addSubview:self.errorLabel];
+    
+    // 重试按钮
+    self.retryButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.retryButton setTitle:@"点击重试" forState:UIControlStateNormal];
+    [self.retryButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    self.retryButton.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
+    self.retryButton.backgroundColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0];
+    self.retryButton.layer.cornerRadius = 22;
+    self.retryButton.frame = CGRectMake((w - 120) / 2, h / 2 + 20, 120, 44);
+    [self.retryButton addTarget:self action:@selector(retryLoad) forControlEvents:UIControlEventTouchUpInside];
+    [self.errorView addSubview:self.retryButton];
+}
+
+- (void)setupNetworkMonitoring {
+    // 定时检查网络状态（如果当前显示错误页面）
+    [self scheduleNetworkCheck];
+}
+
+- (void)scheduleNetworkCheck {
+    __weak typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) return;
+        
+        // 如果当前显示错误页面，尝试重新请求
+        if (!self.errorView.hidden && self.dramaList.count == 0) {
+            NSLog(@"[Skits] 定时检查网络，尝试重新加载");
+            [self retryLoad];
+        } else if (!self.errorView.hidden) {
+            // 继续检查
+            [self scheduleNetworkCheck];
+        }
+    });
+}
+
+- (void)retryLoad {
+    self.errorView.hidden = YES;
+    self.currentPage = 1;
+    [self.dramaList removeAllObjects];
+    [self.collectionView reloadData];
+    [self fetchCategories];
+    [self fetchDramas];
+}
+
 #pragma mark - API 请求
 
 - (void)fetchCategories {
@@ -148,7 +217,7 @@ static NSString * const kCategoryCellId = @"CategoryCell";
         }
         
         // 刷新分类栏
-        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:1]];
+        [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:0]];
         
     } failure:^(NSError *error) {
         NSLog(@"[Skits] 加载分类失败: %@", error.localizedDescription);
@@ -187,9 +256,6 @@ static NSString * const kCategoryCellId = @"CategoryCell";
             [self.dramaList removeAllObjects];
             [self.dramaList addObjectsFromArray:newDramas];
             
-            // 用前3个有推荐标记的（或前3个）做 Banner
-            [self buildBannersFromDramas];
-            
             [self.collectionView reloadData];
         } else {
             NSInteger oldCount = self.dramaList.count;
@@ -197,7 +263,7 @@ static NSString * const kCategoryCellId = @"CategoryCell";
             
             NSMutableArray *indexPaths = [NSMutableArray array];
             for (NSInteger i = oldCount; i < self.dramaList.count; i++) {
-                [indexPaths addObject:[NSIndexPath indexPathForItem:i inSection:2]];
+                [indexPaths addObject:[NSIndexPath indexPathForItem:i inSection:1]];
             }
             [self.collectionView insertItemsAtIndexPaths:indexPaths];
         }
@@ -208,6 +274,9 @@ static NSString * const kCategoryCellId = @"CategoryCell";
             [self.collectionView.mj_footer endRefreshingWithNoMoreData];
         }
         
+        // 隐藏错误页面
+        self.errorView.hidden = YES;
+        
         NSLog(@"[Skits] 加载完成 page=%ld, 新增%lu, 总%lu/%ld",
               (long)self.currentPage, (unsigned long)newDramas.count,
               (unsigned long)self.dramaList.count, (long)total);
@@ -217,6 +286,11 @@ static NSString * const kCategoryCellId = @"CategoryCell";
         [self.collectionView.mj_header endRefreshing];
         [self.collectionView.mj_footer endRefreshing];
         NSLog(@"[Skits] 加载失败: %@", error.localizedDescription);
+        
+        // 首次加载失败，显示错误页面
+        if (self.dramaList.count == 0) {
+            self.errorView.hidden = NO;
+        }
     }];
 }
 
@@ -265,36 +339,20 @@ static NSString * const kCategoryCellId = @"CategoryCell";
 #pragma mark - UICollectionViewDataSource
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
-    // Section 0: Banner
-    // Section 1: 分类导航
-    // Section 2: 剧集列表
-    return 3;
+    // Section 0: 分类导航
+    // Section 1: 剧集列表
+    return 2;
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    if (section == 0) return 1;  // Banner
-    if (section == 1) return 1;  // 分类导航
+    if (section == 0) return 1;  // 分类导航
     return self.dramaList.count;  // 剧集
 }
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    // Banner
-    if (indexPath.section == 0) {
-        UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kBannerCellId forIndexPath:indexPath];
-        for (UIView *sub in cell.contentView.subviews) [sub removeFromSuperview];
-        
-        RRBannerView *bannerView = [[RRBannerView alloc] initWithFrame:cell.contentView.bounds];
-        bannerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        bannerView.delegate = self;
-        bannerView.banners = self.banners;
-        [bannerView startAutoScroll];
-        [cell.contentView addSubview:bannerView];
-        return cell;
-    }
-    
     // 分类导航
-    if (indexPath.section == 1) {
+    if (indexPath.section == 0) {
         UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kCategoryCellId forIndexPath:indexPath];
         for (UIView *sub in cell.contentView.subviews) [sub removeFromSuperview];
         
@@ -302,6 +360,7 @@ static NSString * const kCategoryCellId = @"CategoryCell";
         categoryBar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         categoryBar.delegate = self;
         categoryBar.categories = [self.categories copy];
+        categoryBar.selectedCategoryId = self.selectedCategoryId;
         [cell.contentView addSubview:categoryBar];
         return cell;
     }
@@ -317,7 +376,7 @@ static NSString * const kCategoryCellId = @"CategoryCell";
     RRSkitsSectionHeaderView *header = [collectionView dequeueReusableSupplementaryViewOfKind:kind
                                                                         withReuseIdentifier:kHeaderId
                                                                                forIndexPath:indexPath];
-    if (indexPath.section == 2) {
+    if (indexPath.section == 1) {
         header.title = @"🔥 全部短剧";
         header.moreTapped = nil;
     } else {
@@ -334,8 +393,7 @@ static NSString * const kCategoryCellId = @"CategoryCell";
     CGFloat screenWidth = collectionView.bounds.size.width;
     CGFloat contentWidth = screenWidth - 32;
     
-    if (indexPath.section == 0) return CGSizeMake(screenWidth, 180);
-    if (indexPath.section == 1) return CGSizeMake(screenWidth, 90);
+    if (indexPath.section == 0) return CGSizeMake(screenWidth, 90);
     
     // 三列网格
     CGFloat itemWidth = (contentWidth - 20) / 3.0;
@@ -344,14 +402,14 @@ static NSString * const kCategoryCellId = @"CategoryCell";
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section {
-    if (section < 2) return CGSizeMake(collectionView.bounds.size.width, 8);
+    if (section < 1) return CGSizeMake(collectionView.bounds.size.width, 8);
     return CGSizeMake(collectionView.bounds.size.width, 44);
 }
 
 #pragma mark - UICollectionViewDelegate
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section < 2) return;
+    if (indexPath.section < 1) return;
     
     RRDramaModel *drama = self.dramaList[indexPath.item];
     NSLog(@"点击短剧: %@ (id=%@)", drama.title, drama.dramaId);
@@ -381,6 +439,17 @@ static NSString * const kCategoryCellId = @"CategoryCell";
     self.currentPage = 1;
     self.hasMore = YES;
     [self.collectionView.mj_footer resetNoMoreData];
+    
+    // 更新分类栏的选中状态
+    RRCategoryBarView *categoryBar = (RRCategoryBarView *)barView;
+    categoryBar.selectedCategoryId = category.categoryId;
+    
+    // 清空旧的剧集列表
+    [self.dramaList removeAllObjects];
+    
+    // 只刷新短剧列表（section 1）
+    [self.collectionView reloadSections:[NSIndexSet indexSetWithIndex:1]];
+    
     [self fetchDramas];
 }
 

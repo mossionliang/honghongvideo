@@ -21,7 +21,7 @@
 #import "RRDramaEpisodeCell.h"
 
 /// 预加载窗口（前后各N个）
-static const NSInteger kPreloadWindow = 1;
+static const NSInteger kPreloadWindow = 2;
 
 #pragma mark - RRDramaDetailViewController
 
@@ -56,6 +56,11 @@ static const NSInteger kPreloadWindow = 1;
 @property (nonatomic, assign) BOOL isScreenCasting; // 是否正在投屏
 @property (nonatomic, strong) NSString *bottomBarText; // 底部栏文本
 
+// 失败页面
+@property (nonatomic, strong) UIView *errorView;
+@property (nonatomic, strong) UILabel *errorLabel;
+@property (nonatomic, strong) UIButton *retryButton;
+
 @end
 
 static const NSInteger kEpisodesPerRange = 30;
@@ -75,6 +80,8 @@ static const NSInteger kEpisodesPerRange = 30;
     [self setupCollectionView];
     [self setupTopNav];
     [self setupEpisodePanel];
+    [self setupErrorView];
+    [self setupNetworkMonitoring];
     [self fetchDramaDetail];
 }
 
@@ -254,6 +261,71 @@ static const NSInteger kEpisodesPerRange = 30;
     [self.panelView addSubview:self.favoriteButton];
 }
 
+- (void)setupErrorView {
+    CGFloat w = self.view.bounds.size.width;
+    CGFloat h = self.view.bounds.size.height;
+    
+    self.errorView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+    self.errorView.backgroundColor = [UIColor blackColor];
+    self.errorView.hidden = YES;
+    [self.view addSubview:self.errorView];
+    
+    // 错误图标
+    UIImageView *errorIcon = [[UIImageView alloc] init];
+    UIImage *icon = [UIImage systemImageNamed:@"wifi.slash" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:60 weight:UIFontWeightLight]];
+    errorIcon.image = icon;
+    errorIcon.tintColor = [UIColor colorWithWhite:0.4 alpha:1.0];
+    errorIcon.frame = CGRectMake((w - 80) / 2, h / 2 - 120, 80, 80);
+    [self.errorView addSubview:errorIcon];
+    
+    // 错误文字
+    self.errorLabel = [[UILabel alloc] init];
+    self.errorLabel.text = @"加载失败";
+    self.errorLabel.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
+    self.errorLabel.font = [UIFont systemFontOfSize:16];
+    self.errorLabel.textAlignment = NSTextAlignmentCenter;
+    self.errorLabel.frame = CGRectMake(20, h / 2 - 20, w - 40, 24);
+    [self.errorView addSubview:self.errorLabel];
+    
+    // 重试按钮
+    self.retryButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [self.retryButton setTitle:@"点击重试" forState:UIControlStateNormal];
+    [self.retryButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    self.retryButton.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
+    self.retryButton.backgroundColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0];
+    self.retryButton.layer.cornerRadius = 22;
+    self.retryButton.frame = CGRectMake((w - 120) / 2, h / 2 + 20, 120, 44);
+    [self.retryButton addTarget:self action:@selector(retryLoad) forControlEvents:UIControlEventTouchUpInside];
+    [self.errorView addSubview:self.retryButton];
+}
+
+- (void)setupNetworkMonitoring {
+    // 定时检查网络状态（如果当前显示错误页面）
+    [self scheduleNetworkCheck];
+}
+
+- (void)scheduleNetworkCheck {
+    __weak typeof(self) weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) return;
+        
+        // 如果当前显示错误页面，尝试重新请求
+        if (!self.errorView.hidden) {
+            NSLog(@"[DramaDetail] 定时检查网络，尝试重新加载");
+            [self retryLoad];
+        } else if (!self.errorView.hidden) {
+            // 继续检查
+            [self scheduleNetworkCheck];
+        }
+    });
+}
+
+- (void)retryLoad {
+    self.errorView.hidden = YES;
+    [self fetchDramaDetail];
+}
+
 #pragma mark - API
 
 - (void)fetchDramaDetail {
@@ -290,6 +362,9 @@ static const NSInteger kEpisodesPerRange = 30;
         // 重新加载播放器集合视图
         [self.collectionView reloadData];
         
+        // 隐藏错误页面
+        self.errorView.hidden = YES;
+        
         // 自动播放第一集
         if (self.episodes.count > 0) {
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -300,7 +375,7 @@ static const NSInteger kEpisodesPerRange = 30;
         
     } failure:^(NSError *error) {
         NSLog(@"[DramaDetail] 加载失败: %@", error.localizedDescription);
-        self.bottomBarText = @"加载失败，点击重试";
+        self.errorView.hidden = NO;
     }];
 }
 
@@ -358,6 +433,11 @@ static const NSInteger kEpisodesPerRange = 30;
 - (void)playEpisodeAtIndex:(NSInteger)index {
     if (index < 0 || index >= (NSInteger)self.episodes.count) return;
     
+    // 先停止当前播放的视频
+    if (self.currentEpisodeIndex >= 0 && self.currentEpisodeIndex != index) {
+        [self stopVideoAtIndex:self.currentEpisodeIndex];
+    }
+    
     self.currentEpisodeIndex = index;
     
     // 确定在哪个 range
@@ -402,11 +482,24 @@ static const NSInteger kEpisodesPerRange = 30;
 }
 
 - (void)preloadAroundIndex:(NSInteger)index {
+    // 预加载前后各 kPreloadWindow 个视频
     for (NSInteger i = index - kPreloadWindow; i <= index + kPreloadWindow; i++) {
         if (i < 0 || i >= (NSInteger)self.episodes.count || i == index) continue;
-        RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:i inSection:0]];
-        if (cell && !cell.hasPreloaded) {
-            [cell preload];
+        
+        // 强制创建 cell（如果还没创建）并预加载
+        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:i inSection:0];
+        
+        // 检查 cell 是否已经存在
+        RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+        if (cell) {
+            // cell 已存在，直接预加载
+            if (!cell.hasPreloaded) {
+                [cell preload];
+            }
+        } else {
+            // cell 还不存在，通过 cellForItemAtIndexPath: 强制创建
+            // 注意：这里不能直接调用 cellForItemAtIndexPath:，因为会导致布局问题
+            // 改为在 scrollViewDidScroll 中提前触发预加载
         }
     }
 }
@@ -495,6 +588,26 @@ static const NSInteger kEpisodesPerRange = 30;
     return 0;
 }
 
+- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (collectionView != self.collectionView) return;
+    
+    RRDramaEpisodeCell *episodeCell = (RRDramaEpisodeCell *)cell;
+    
+    // 如果是当前播放的 cell，开始播放
+    if (indexPath.item == self.currentEpisodeIndex) {
+        if (!episodeCell.hasStarted) {
+            [episodeCell startPlaying];
+            [episodeCell setPlaybackSpeed:self.currentSpeed];
+        }
+    } else {
+        // 如果是相邻的 cell，预加载
+        NSInteger distance = labs(indexPath.item - self.currentEpisodeIndex);
+        if (distance <= kPreloadWindow && !episodeCell.hasPreloaded && !episodeCell.hasStarted) {
+            [episodeCell preload];
+        }
+    }
+}
+
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     if (collectionView == self.collectionView) {
         // 播放器 cell
@@ -558,6 +671,28 @@ static const NSInteger kEpisodesPerRange = 30;
 
 #pragma mark - UIScrollViewDelegate
 
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView != self.collectionView) return;
+    
+    CGFloat pageH = scrollView.bounds.size.height;
+    if (pageH <= 0) return;
+    
+    // 计算当前滚动到的位置（可能在两个 cell 之间）
+    CGFloat currentOffset = scrollView.contentOffset.y;
+    NSInteger currentPage = (NSInteger)(currentOffset / pageH);
+    NSInteger nextPage = currentPage + 1;
+    
+    // 预加载当前页和下一页的视频
+    for (NSInteger i = currentPage - 1; i <= nextPage + 1; i++) {
+        if (i < 0 || i >= (NSInteger)self.episodes.count) continue;
+        
+        RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:i inSection:0]];
+        if (cell && !cell.hasPreloaded && !cell.hasStarted) {
+            [cell preload];
+        }
+    }
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
     if (scrollView != self.collectionView) return;
     
@@ -581,14 +716,14 @@ static const NSInteger kEpisodesPerRange = 30;
         [self updateRangeButtons];
         [self.episodeCollectionView reloadData];
         
-        // 播放新视频
+        // 播放新视频（willDisplayCell 会处理，这里不需要重复调用）
+        // 但为了保险起见，检查一下 cell 是否已经开始播放
         RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:newIndex inSection:0]];
-        if (cell) {
+        if (cell && !cell.hasStarted) {
             [cell startPlaying];
             [cell setPlaybackSpeed:self.currentSpeed];
         }
         
-        [self preloadAroundIndex:newIndex];
         [self releaseDistantPlayers];
     }
 }

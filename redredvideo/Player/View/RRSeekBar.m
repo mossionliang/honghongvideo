@@ -15,6 +15,7 @@ static const CGFloat kThumbSize = 12.0;
 @property (nonatomic, strong) UIView *bufferView;     // 缓冲进度
 @property (nonatomic, strong) UIView *progressView;   // 播放进度
 @property (nonatomic, strong) UIView *thumbView;      // 拖动圆点
+@property (nonatomic, strong) CAGradientLayer *loadingLayer; // 加载动画层
 @property (nonatomic, assign) BOOL isDragging;
 @property (nonatomic, assign) CGFloat currentBarHeight;
 
@@ -50,6 +51,19 @@ static const CGFloat kThumbSize = 12.0;
     self.progressView.backgroundColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0];
     self.progressView.layer.cornerRadius = kNormalHeight / 2;
     [self addSubview:self.progressView];
+    
+    // 加载动画层（渐变流动效果）
+    self.loadingLayer = [CAGradientLayer layer];
+    self.loadingLayer.colors = @[
+        (id)[UIColor colorWithWhite:1.0 alpha:0.3].CGColor,
+        (id)[UIColor colorWithWhite:1.0 alpha:0.6].CGColor,
+        (id)[UIColor colorWithWhite:1.0 alpha:0.3].CGColor
+    ];
+    self.loadingLayer.startPoint = CGPointMake(0, 0.5);
+    self.loadingLayer.endPoint = CGPointMake(1, 0.5);
+    self.loadingLayer.locations = @[@0, @0.5, @1];
+    self.loadingLayer.hidden = YES;
+    [self.trackView.layer addSublayer:self.loadingLayer];
     
     // 拖动圆点（默认隐藏，按下时显示）
     self.thumbView = [[UIView alloc] init];
@@ -98,6 +112,10 @@ static const CGFloat kThumbSize = 12.0;
     self.trackView.frame = CGRectMake(0, barY, w, barH);
     self.trackView.layer.cornerRadius = barH / 2;
     
+    // 加载动画层
+    self.loadingLayer.frame = self.trackView.bounds;
+    self.loadingLayer.cornerRadius = barH / 2;
+    
     CGFloat bufferW = w * self.bufferProgress;
     self.bufferView.frame = CGRectMake(0, barY, bufferW, barH);
     self.bufferView.layer.cornerRadius = barH / 2;
@@ -123,6 +141,38 @@ static const CGFloat kThumbSize = 12.0;
 - (void)setBufferProgress:(float)bufferProgress {
     _bufferProgress = MAX(0, MIN(1, bufferProgress));
     [self updateBarLayout];
+}
+
+- (void)setIsLoading:(BOOL)isLoading {
+    if (_isLoading == isLoading) return;
+    _isLoading = isLoading;
+    
+    if (isLoading) {
+        // 显示加载动画
+        self.loadingLayer.hidden = NO;
+        [self startLoadingAnimation];
+    } else {
+        // 隐藏加载动画
+        [self stopLoadingAnimation];
+        self.loadingLayer.hidden = YES;
+    }
+}
+
+- (void)startLoadingAnimation {
+    // 移除旧动画
+    [self.loadingLayer removeAllAnimations];
+    
+    // 创建流动动画
+    CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"locations"];
+    animation.fromValue = @[@-1, @-0.5, @0];
+    animation.toValue = @[@1, @1.5, @2];
+    animation.duration = 1.5;
+    animation.repeatCount = HUGE_VALF;
+    [self.loadingLayer addAnimation:animation forKey:@"loading"];
+}
+
+- (void)stopLoadingAnimation {
+    [self.loadingLayer removeAllAnimations];
 }
 
 #pragma mark - Expand / Collapse

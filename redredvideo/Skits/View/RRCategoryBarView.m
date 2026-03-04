@@ -50,6 +50,11 @@
     [self.collectionView reloadData];
 }
 
+- (void)setSelectedCategoryId:(NSString *)selectedCategoryId {
+    _selectedCategoryId = selectedCategoryId;
+    [self.collectionView reloadData];
+}
+
 #pragma mark - UICollectionViewDataSource
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
@@ -66,9 +71,22 @@
     
     RRCategoryModel *cat = self.categories[indexPath.item];
     
+    // 判断是否选中
+    BOOL isSelected = NO;
+    if (self.selectedCategoryId == nil || [self.selectedCategoryId isEqualToString:@"0"]) {
+        // 未选择或选择"全部"，默认选中第一个（全部）
+        isSelected = (indexPath.item == 0);
+    } else {
+        isSelected = [cat.categoryId isEqualToString:self.selectedCategoryId];
+    }
+    
     // 图标容器（圆形背景）
     UIView *iconBg = [[UIView alloc] initWithFrame:CGRectMake(10, 0, 44, 44)];
-    iconBg.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
+    if (isSelected) {
+        iconBg.backgroundColor = [UIColor colorWithRed:1.0 green:0.25 blue:0.25 alpha:1.0];
+    } else {
+        iconBg.backgroundColor = [UIColor colorWithRed:0.15 green:0.15 blue:0.2 alpha:1.0];
+    }
     iconBg.layer.cornerRadius = 22;
     [cell.contentView addSubview:iconBg];
     
@@ -90,8 +108,13 @@
     // 分类名
     UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 50, 64, 20)];
     nameLabel.text = cat.name;
-    nameLabel.textColor = [UIColor colorWithWhite:0.8 alpha:1.0];
-    nameLabel.font = [UIFont systemFontOfSize:12];
+    if (isSelected) {
+        nameLabel.textColor = [UIColor whiteColor];
+        nameLabel.font = [UIFont boldSystemFontOfSize:12];
+    } else {
+        nameLabel.textColor = [UIColor colorWithWhite:0.8 alpha:1.0];
+        nameLabel.font = [UIFont systemFontOfSize:12];
+    }
     nameLabel.textAlignment = NSTextAlignmentCenter;
     [cell.contentView addSubview:nameLabel];
     

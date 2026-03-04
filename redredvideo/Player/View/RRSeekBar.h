@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) float bufferProgress;
 /// 是否正在拖动
 @property (nonatomic, assign, readonly) BOOL isDragging;
+/// 是否正在加载（显示加载动画）
+@property (nonatomic, assign) BOOL isLoading;
 
 @end
 
