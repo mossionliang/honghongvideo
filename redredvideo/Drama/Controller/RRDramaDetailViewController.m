@@ -18,25 +18,22 @@
 #import "RRNavigationHelper.h"
 #import "RRNetworkManager.h"
 #import "RREpisodeSelectCell.h"
+#import "RRDramaEpisodeCell.h"
+
+/// 预加载窗口（前后各N个）
+static const NSInteger kPreloadWindow = 1;
 
 #pragma mark - RRDramaDetailViewController
 
-@interface RRDramaDetailViewController () <RRPlayerViewDelegate, RRSeekBarDelegate, UICollectionViewDelegate, UICollectionViewDataSource, RRPlayerMenuViewDelegate, RRScreenCastViewDelegate>
+@interface RRDramaDetailViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, RRDramaEpisodeCellDelegate, RRPlayerMenuViewDelegate, RRScreenCastViewDelegate>
 
-// 播放器（全屏）
-@property (nonatomic, strong) RRPlayerView *playerView;
-@property (nonatomic, strong) RRSeekBar *seekBar;
+// 播放器集合视图（全屏，每个 cell 是一集）
+@property (nonatomic, strong) UICollectionView *collectionView;
 
 // 顶部导航
 @property (nonatomic, strong) UIButton *backButton;
 @property (nonatomic, strong) UILabel *episodeTitleLabel;
 @property (nonatomic, strong) UIButton *speedButton;
-
-// 底部选集栏
-@property (nonatomic, strong) UIView *bottomBar;
-@property (nonatomic, strong) UILabel *bottomBarLabel;
-@property (nonatomic, strong) UIButton *bottomBarExpandBtn;
-@property (nonatomic, strong) UIButton *nextEpisodeBtn;
 
 // 选集面板（底部弹出）
 @property (nonatomic, strong) UIView *panelOverlay;
@@ -57,6 +54,7 @@
 @property (nonatomic, strong) NSMutableArray<UIButton *> *rangeButtons;
 @property (nonatomic, assign) float currentSpeed;
 @property (nonatomic, assign) BOOL isScreenCasting; // 是否正在投屏
+@property (nonatomic, strong) NSString *bottomBarText; // 底部栏文本
 
 @end
 
@@ -74,9 +72,8 @@ static const NSInteger kEpisodesPerRange = 30;
     self.rangeButtons = [NSMutableArray array];
     self.currentSpeed = 1.0;
     
-    [self setupPlayer];
+    [self setupCollectionView];
     [self setupTopNav];
-    [self setupBottomBar];
     [self setupEpisodePanel];
     [self fetchDramaDetail];
 }
@@ -87,7 +84,7 @@ static const NSInteger kEpisodesPerRange = 30;
     
     // 从投屏控制页面返回时，恢复播放
     if (self.isScreenCasting) {
-        [self.playerView play];
+        [self resumeVideoAtIndex:self.currentEpisodeIndex];
         NSLog(@"[短剧详情] 从投屏控制页面返回，恢复播放");
     }
 }
@@ -98,14 +95,14 @@ static const NSInteger kEpisodesPerRange = 30;
     // 如果是去投屏控制页面，不停止播放
     // 如果是返回首页等其他页面，停止播放并重置投屏标志
     if (!self.isScreenCasting) {
-        [self.playerView stop];
+        [self stopVideoAtIndex:self.currentEpisodeIndex];
     } else {
         // 检查是否是真正退出（返回首页），而不是去投屏控制页面
         // 通过检查 navigationController 的 viewControllers 数组
         if (self.navigationController && 
             ![self.navigationController.viewControllers containsObject:self]) {
             // 正在被 pop 出栈，说明是真正退出
-            [self.playerView stop];
+            [self stopVideoAtIndex:self.currentEpisodeIndex];
             self.isScreenCasting = NO;
             NSLog(@"[短剧详情] 退出页面，停止播放并重置投屏标志");
         }
@@ -119,19 +116,28 @@ static const NSInteger kEpisodesPerRange = 30;
 
 #pragma mark - Setup
 
-- (void)setupPlayer {
+- (void)setupCollectionView {
     CGFloat w = self.view.bounds.size.width;
     CGFloat h = self.view.bounds.size.height;
     
-    self.playerView = [[RRPlayerView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
-    self.playerView.delegate = self;
-    [self.view addSubview:self.playerView];
+    UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
+    layout.scrollDirection = UICollectionViewScrollDirectionVertical;
+    layout.minimumLineSpacing = 0;
+    layout.minimumInteritemSpacing = 0;
     
-    // 进度条在底部栏上方
-    self.seekBar = [[RRSeekBar alloc] initWithFrame:CGRectZero];
-    self.seekBar.delegate = self;
-    [self.view addSubview:self.seekBar];
+    self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, 0, w, h) collectionViewLayout:layout];
+    self.collectionView.backgroundColor = [UIColor blackColor];
+    self.collectionView.delegate = self;
+    self.collectionView.dataSource = self;
+    self.collectionView.pagingEnabled = YES;
+    self.collectionView.showsVerticalScrollIndicator = NO;
+    self.collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    
+    [self.collectionView registerClass:[RRDramaEpisodeCell class] forCellWithReuseIdentifier:@"EpisodeCell"];
+    [self.view addSubview:self.collectionView];
 }
+
+// 移除手势滑动，改用 UICollectionView 滚动
 
 - (void)setupTopNav {
     CGFloat safeTop = 50;
@@ -155,51 +161,6 @@ static const NSInteger kEpisodesPerRange = 30;
     self.episodeTitleLabel.layer.shadowOpacity = 0.5;
     self.episodeTitleLabel.layer.shadowRadius = 2;
     [self.view addSubview:self.episodeTitleLabel];
-}
-
-- (void)setupBottomBar {
-    CGFloat w = self.view.bounds.size.width;
-    CGFloat h = self.view.bounds.size.height;
-    CGFloat barH = 50;
-    CGFloat safeBottom = [UIApplication sharedApplication].windows.firstObject.safeAreaInsets.bottom;
-    
-    self.bottomBar = [[UIView alloc] initWithFrame:CGRectMake(0, h - barH - safeBottom, w, barH + safeBottom)];
-    self.bottomBar.backgroundColor = [UIColor colorWithWhite:0.1 alpha:0.95];
-    
-    // 选集信息
-    self.bottomBarLabel = [[UILabel alloc] initWithFrame:CGRectMake(16, 0, w - 100, barH)];
-    self.bottomBarLabel.text = @"选集 · 加载中...";
-    self.bottomBarLabel.textColor = [UIColor whiteColor];
-    self.bottomBarLabel.font = [UIFont systemFontOfSize:14];
-    [self.bottomBar addSubview:self.bottomBarLabel];
-    
-    // 展开按钮
-    self.bottomBarExpandBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.bottomBarExpandBtn.frame = CGRectMake(w - 90, 0, 44, barH);
-    UIImage *expandImg = [UIImage systemImageNamed:@"chevron.up"];
-    [self.bottomBarExpandBtn setImage:expandImg forState:UIControlStateNormal];
-    self.bottomBarExpandBtn.tintColor = [UIColor whiteColor];
-    [self.bottomBarExpandBtn addTarget:self action:@selector(showEpisodePanel) forControlEvents:UIControlEventTouchUpInside];
-    [self.bottomBar addSubview:self.bottomBarExpandBtn];
-    
-    // 下一集按钮
-    self.nextEpisodeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    self.nextEpisodeBtn.frame = CGRectMake(w - 50, 0, 44, barH);
-    UIImage *nextImg = [UIImage systemImageNamed:@"forward.end.fill"];
-    [self.nextEpisodeBtn setImage:nextImg forState:UIControlStateNormal];
-    self.nextEpisodeBtn.tintColor = [UIColor whiteColor];
-    [self.nextEpisodeBtn addTarget:self action:@selector(playNextEpisode) forControlEvents:UIControlEventTouchUpInside];
-    [self.bottomBar addSubview:self.nextEpisodeBtn];
-    
-    // 点击整个底部栏也展开
-    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showEpisodePanel)];
-    [self.bottomBar addGestureRecognizer:tap];
-    
-    [self.view addSubview:self.bottomBar];
-    
-    // seekBar 在底部栏上方
-    CGFloat seekY = self.bottomBar.frame.origin.y - 16;
-    self.seekBar.frame = CGRectMake(10, seekY, w - 20, 16);
 }
 
 - (void)setupEpisodePanel {
@@ -305,11 +266,11 @@ static const NSInteger kEpisodesPerRange = 30;
         self.dramaData = data;
         self.episodes = data[@"episodes"] ?: @[];
         
-        // 更新底部栏
+        // 保存底部栏文本
         NSInteger totalEp = [data[@"total_episodes"] integerValue];
         NSInteger freeEp = [data[@"free_episodes"] integerValue];
         NSString *freeText = freeEp >= totalEp ? @"免费观看" : [NSString stringWithFormat:@"前%ld集免费", (long)freeEp];
-        self.bottomBarLabel.text = [NSString stringWithFormat:@"选集 · 全%ld集 · %@", (long)totalEp, freeText];
+        self.bottomBarText = [NSString stringWithFormat:@"选集 · 全%ld集 · %@", (long)totalEp, freeText];
         
         // 更新面板
         self.panelTitleLabel.text = data[@"title"] ?: @"";
@@ -326,14 +287,20 @@ static const NSInteger kEpisodesPerRange = 30;
         [self buildEpisodeRanges];
         [self.episodeCollectionView reloadData];
         
+        // 重新加载播放器集合视图
+        [self.collectionView reloadData];
+        
         // 自动播放第一集
         if (self.episodes.count > 0) {
-            [self playEpisodeAtIndex:0];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self playEpisodeAtIndex:0];
+                [self preloadAroundIndex:0];
+            });
         }
         
     } failure:^(NSError *error) {
         NSLog(@"[DramaDetail] 加载失败: %@", error.localizedDescription);
-        self.bottomBarLabel.text = @"加载失败，点击重试";
+        self.bottomBarText = @"加载失败，点击重试";
     }];
 }
 
@@ -398,44 +365,64 @@ static const NSInteger kEpisodesPerRange = 30;
     [self updateRangeButtons];
     [self.episodeCollectionView reloadData];
     
-    // 获取视频URL
-    NSDictionary *ep = self.episodes[index];
-    NSString *videoUrl = ep[@"video_url"] ?: @"";
-    NSInteger epNum = [ep[@"episode_number"] integerValue];
+    // 滚动到指定集
+    [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0] 
+                                 atScrollPosition:UICollectionViewScrollPositionCenteredVertically 
+                                         animated:NO];
     
+    // 更新标题
+    NSDictionary *ep = self.episodes[index];
+    NSInteger epNum = [ep[@"episode_number"] integerValue];
     self.episodeTitleLabel.text = [NSString stringWithFormat:@"第%ld集", (long)epNum];
     
-    if (videoUrl.length == 0) return;
-    
-    if (![videoUrl hasPrefix:@"http"]) {
-        videoUrl = [NSString stringWithFormat:@"%@%@", [RRNetworkManager shared].baseURL, videoUrl];
+    // 开始播放
+    RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    if (cell) {
+        [cell startPlaying];
+        [cell setPlaybackSpeed:self.currentSpeed];
     }
-    
-    NSURL *url = [NSURL URLWithString:videoUrl];
-    if (url) {
-        [self.playerView loadVideoWithURL:url];
-    }
-    
-    // 预缓存下一集
-    [self precacheEpisodeAtIndex:index + 1];
 }
 
-/// 预缓存指定集（提前下载部分数据）
-- (void)precacheEpisodeAtIndex:(NSInteger)index {
+- (void)stopVideoAtIndex:(NSInteger)index {
     if (index < 0 || index >= (NSInteger)self.episodes.count) return;
-    
-    NSDictionary *ep = self.episodes[index];
-    NSString *videoUrl = ep[@"video_url"] ?: @"";
-    if (videoUrl.length == 0) return;
-    
-    if (![videoUrl hasPrefix:@"http"]) {
-        videoUrl = [NSString stringWithFormat:@"%@%@", [RRNetworkManager shared].baseURL, videoUrl];
+    RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    [cell stopPlaying];
+}
+
+- (void)pauseVideoAtIndex:(NSInteger)index {
+    if (index < 0 || index >= (NSInteger)self.episodes.count) return;
+    RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    [cell pausePlaying];
+}
+
+- (void)resumeVideoAtIndex:(NSInteger)index {
+    if (index < 0 || index >= (NSInteger)self.episodes.count) return;
+    RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    [cell resumePlaying];
+}
+
+- (void)preloadAroundIndex:(NSInteger)index {
+    for (NSInteger i = index - kPreloadWindow; i <= index + kPreloadWindow; i++) {
+        if (i < 0 || i >= (NSInteger)self.episodes.count || i == index) continue;
+        RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:i inSection:0]];
+        if (cell && !cell.hasPreloaded) {
+            [cell preload];
+        }
     }
-    
-    NSURL *url = [NSURL URLWithString:videoUrl];
-    if (url) {
-        [RRPlayerView precacheURL:url];
+}
+
+- (void)releaseDistantPlayers {
+    for (RRDramaEpisodeCell *cell in self.collectionView.visibleCells) {
+        NSIndexPath *ip = [self.collectionView indexPathForCell:cell];
+        if (ip && labs(ip.item - self.currentEpisodeIndex) > kPreloadWindow) {
+            [cell stopPlaying];
+        }
     }
+}
+
+/// 预缓存指定集（提前下载部分数据）- 保留用于兼容
+- (void)precacheEpisodeAtIndex:(NSInteger)index {
+    // 现在由 preloadAroundIndex 处理
 }
 
 - (void)playNextEpisode {
@@ -495,9 +482,13 @@ static const NSInteger kEpisodesPerRange = 30;
     [self.episodeCollectionView setContentOffset:CGPointZero animated:NO];
 }
 
-#pragma mark - UICollectionView
+#pragma mark - UICollectionView (播放器)
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    if (collectionView == self.collectionView) {
+        return self.episodes.count;
+    }
+    // 选集面板
     if (self.currentRangeIndex < (NSInteger)self.episodeRanges.count) {
         return self.episodeRanges[self.currentRangeIndex].count;
     }
@@ -505,6 +496,26 @@ static const NSInteger kEpisodesPerRange = 30;
 }
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (collectionView == self.collectionView) {
+        // 播放器 cell
+        RRDramaEpisodeCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"EpisodeCell" forIndexPath:indexPath];
+        cell.delegate = self;
+        
+        if (indexPath.item < (NSInteger)self.episodes.count) {
+            NSDictionary *ep = self.episodes[indexPath.item];
+            NSString *baseURL = [RRNetworkManager shared].baseURL;
+            [cell configureWithEpisode:ep baseURL:baseURL];
+            cell.currentSpeed = self.currentSpeed;
+            
+            // 配置底部栏
+            BOOL showNext = (indexPath.item < (NSInteger)self.episodes.count - 1);
+            [cell configureBottomBarWithText:self.bottomBarText ?: @"选集" showNextButton:showNext];
+        }
+        
+        return cell;
+    }
+    
+    // 选集面板 cell
     RREpisodeSelectCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"EpCell" forIndexPath:indexPath];
     
     NSInteger globalIndex = self.currentRangeIndex * kEpisodesPerRange + indexPath.item;
@@ -520,11 +531,22 @@ static const NSInteger kEpisodesPerRange = 30;
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (collectionView == self.collectionView) {
+        // 播放器 cell：全屏大小
+        return self.collectionView.bounds.size;
+    }
+    // 选集面板 cell
     CGFloat w = (collectionView.bounds.size.width - 32 - 40) / 6.0; // 6列
     return CGSizeMake(w, 44);
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    if (collectionView == self.collectionView) {
+        // 播放器 cell 点击不处理
+        return;
+    }
+    
+    // 选集面板点击
     NSInteger globalIndex = self.currentRangeIndex * kEpisodesPerRange + indexPath.item;
     [self playEpisodeAtIndex:globalIndex];
     
@@ -534,49 +556,81 @@ static const NSInteger kEpisodesPerRange = 30;
     });
 }
 
-#pragma mark - RRPlayerViewDelegate
+#pragma mark - UIScrollViewDelegate
 
-- (void)playerViewDidTap:(id)playerView {}
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    if (scrollView != self.collectionView) return;
+    
+    CGFloat pageH = scrollView.bounds.size.height;
+    if (pageH <= 0) return;
+    
+    NSInteger newIndex = (NSInteger)(scrollView.contentOffset.y / pageH + 0.5);
+    newIndex = MAX(0, MIN(newIndex, (NSInteger)self.episodes.count - 1));
+    
+    if (newIndex != self.currentEpisodeIndex) {
+        [self stopVideoAtIndex:self.currentEpisodeIndex];
+        self.currentEpisodeIndex = newIndex;
+        
+        // 更新标题
+        NSDictionary *ep = self.episodes[newIndex];
+        NSInteger epNum = [ep[@"episode_number"] integerValue];
+        self.episodeTitleLabel.text = [NSString stringWithFormat:@"第%ld集", (long)epNum];
+        
+        // 更新选集面板
+        self.currentRangeIndex = newIndex / kEpisodesPerRange;
+        [self updateRangeButtons];
+        [self.episodeCollectionView reloadData];
+        
+        // 播放新视频
+        RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:newIndex inSection:0]];
+        if (cell) {
+            [cell startPlaying];
+            [cell setPlaybackSpeed:self.currentSpeed];
+        }
+        
+        [self preloadAroundIndex:newIndex];
+        [self releaseDistantPlayers];
+    }
+}
 
-- (void)playerViewDidLongPress:(id)playerView {
+#pragma mark - RRDramaEpisodeCellDelegate
+
+- (void)episodeCellDidLongPress:(RRDramaEpisodeCell *)cell {
     RRPlayerMenuView *menu = [[RRPlayerMenuView alloc] init];
     menu.delegate = self;
     menu.currentSpeed = self.currentSpeed;
     [menu showInView:self.view];
 }
 
-- (void)playerViewDidFinishPlaying:(id)playerView {
+- (void)episodeCell:(RRDramaEpisodeCell *)cell didFinishPlaying:(NSDictionary *)episode {
     [self playNextEpisode];
 }
 
-- (void)playerView:(id)playerView playProgress:(float)progress currentTime:(NSTimeInterval)current totalTime:(NSTimeInterval)total {
-    self.seekBar.progress = progress;
+- (void)episodeCellDidTapEpisodePanel:(RRDramaEpisodeCell *)cell {
+    [self showEpisodePanel];
 }
 
-- (void)playerView:(id)playerView bufferProgress:(float)progress {
-    self.seekBar.bufferProgress = progress;
+- (void)episodeCellDidTapNextEpisode:(RRDramaEpisodeCell *)cell {
+    [self playNextEpisode];
 }
 
-- (void)playerView:(id)playerView stateChanged:(RRPlayerState)state {}
+#pragma mark - UICollectionView (选集面板)
 
-#pragma mark - RRSeekBarDelegate
+// 已移动到上面的 UICollectionView (播放器) 和 UICollectionView (选集面板) 部分
 
-- (void)seekBarDidBeginDragging:(id)seekBar { [self.playerView pause]; }
-- (void)seekBar:(id)seekBar didSeekToProgress:(float)progress {}
-- (void)seekBar:(id)seekBar didEndSeekAtProgress:(float)progress {
-    NSTimeInterval total = self.playerView.totalTime;
-    if (total > 0) {
-        CMTime targetTime = CMTimeMakeWithSeconds(total * progress, NSEC_PER_SEC);
-        [self.playerView seekToTime:targetTime];
-    }
-    [self.playerView play];
-}
+// RRPlayerViewDelegate 和 RRSeekBarDelegate 已移到 RRDramaEpisodeCell 中处理
 
 #pragma mark - RRPlayerMenuViewDelegate
 
 - (void)playerMenuDidSelectSpeed:(float)speed {
     self.currentSpeed = speed;
-    [self.playerView setRate:speed];
+    
+    // 更新当前播放的 cell 的速度
+    RRDramaEpisodeCell *cell = (RRDramaEpisodeCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:self.currentEpisodeIndex inSection:0]];
+    if (cell) {
+        [cell setPlaybackSpeed:speed];
+    }
+    
     [self showToast:[NSString stringWithFormat:@"播放速度: %.2gx", speed]];
 }
 
