@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *dramaId;
 /// 剧集标题（导航栏用，可选）
 @property (nonatomic, copy) NSString *dramaTitle;
+/// 起始播放集数索引（可选，默认0从第1集开始）
+@property (nonatomic, assign) NSInteger startEpisodeIndex;
 
 @end
 

@@ -365,11 +365,16 @@ static const NSInteger kEpisodesPerRange = 30;
         // 隐藏错误页面
         self.errorView.hidden = YES;
         
-        // 自动播放第一集
+        // 自动播放指定集数（默认第一集）
         if (self.episodes.count > 0) {
+            NSInteger startIndex = self.startEpisodeIndex;
+            // 确保索引有效
+            if (startIndex < 0 || startIndex >= self.episodes.count) {
+                startIndex = 0;
+            }
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [self playEpisodeAtIndex:0];
-                [self preloadAroundIndex:0];
+                [self playEpisodeAtIndex:startIndex];
+                [self preloadAroundIndex:startIndex];
             });
         }
         
@@ -520,7 +525,11 @@ static const NSInteger kEpisodesPerRange = 30;
 
 - (void)playNextEpisode {
     if (self.currentEpisodeIndex + 1 < (NSInteger)self.episodes.count) {
+        // 还有下一集，播放下一集
         [self playEpisodeAtIndex:self.currentEpisodeIndex + 1];
+    } else {
+        // 已经是最后一集，重新从第一集开始播放
+        [self playEpisodeAtIndex:0];
     }
 }
 

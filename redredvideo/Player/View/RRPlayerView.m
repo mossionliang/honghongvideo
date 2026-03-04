@@ -387,14 +387,13 @@ static void *kBufferFullContext = &kBufferFullContext;
 #pragma mark - Notifications
 
 - (void)playerDidFinish:(NSNotification *)notification {
-    // 循环播放
-    [self.player seekToTime:kCMTimeZero completionHandler:^(BOOL finished) {
-        if (finished) [self.player play];
-    }];
-    
+    // 播放完成，通知 delegate
     if ([self.delegate respondsToSelector:@selector(playerViewDidFinishPlaying:)]) {
         [self.delegate playerViewDidFinishPlaying:self];
     }
+    
+    // 更新状态为完成
+    [self updateState:RRPlayerStateFinished];
 }
 
 - (void)playerDidFail:(NSNotification *)notification {

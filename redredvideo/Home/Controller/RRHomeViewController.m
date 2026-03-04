@@ -7,6 +7,7 @@
 
 #import "RRHomeViewController.h"
 #import "RRVideoModel.h"
+#import "RRDramaModel.h"
 #import "RRPlayerView.h"
 #import <AVFoundation/AVFoundation.h>
 #import "RRVideoOverlayView.h"
@@ -18,6 +19,7 @@
 #import "RRScreenCastView.h"
 #import "RRScreenCastControlViewController.h"
 #import "RRNavigationHelper.h"
+#import "RRDramaDetailViewController.h"
 #import "RRDramaDetailViewController.h"
 #import <Masonry/Masonry.h>
 @class RRHomeFeedCell;
@@ -33,6 +35,7 @@ static const NSInteger kPageSize = 10;
 
 @protocol RRHomeFeedCellDelegate <NSObject>
 - (void)homeFeedCellDidTapViewFullDrama:(RRHomeFeedCell *)cell;
+- (void)homeFeedCellDidFinishPlaying:(RRHomeFeedCell *)cell;
 @end
 
 @interface RRHomeFeedCell : UICollectionViewCell <RRPlayerViewDelegate, RRVideoOverlayViewDelegate, RRSeekBarDelegate, RRPlayerMenuViewDelegate, RRScreenCastViewDelegate>
@@ -192,7 +195,6 @@ static const NSInteger kPageSize = 10;
 #pragma mark - RRPlayerViewDelegate
 
 - (void)playerViewDidTap:(id)playerView {}
-- (void)playerViewDidFinishPlaying:(id)playerView {}
 
 - (void)playerViewDidLongPress:(id)playerView {
     UIView *rootView = self.window.rootViewController.view ?: self.window;
@@ -217,6 +219,13 @@ static const NSInteger kPageSize = 10;
         self.overlayView.hidden = YES;
     } else if (state == RRPlayerStatePlaying) {
         self.overlayView.hidden = NO;
+    }
+}
+
+- (void)playerViewDidFinishPlaying:(id)playerView {
+    // 视频播放完成，通知 delegate
+    if ([self.delegate respondsToSelector:@selector(homeFeedCellDidFinishPlaying:)]) {
+        [self.delegate homeFeedCellDidFinishPlaying:self];
     }
 }
 
@@ -890,6 +899,25 @@ static const NSInteger kPageSize = 10;
     RRDramaDetailViewController *detailVC = [[RRDramaDetailViewController alloc] init];
     detailVC.dramaId = [NSString stringWithFormat:@"%ld", (long)model.dramaId];
     [self.navigationController pushViewController:detailVC animated:YES];
+}
+
+- (void)homeFeedCellDidFinishPlaying:(RRHomeFeedCell *)cell {
+    RRVideoModel *model = cell.videoModel;
+    if (model.dramaId <= 0) return;
+    
+    // 检查是否有多集
+    if (model.totalEpisodes > 1) {
+        NSLog(@"[首页] 视频播放完成，自动跳转到剧集详情页，dramaId: %ld", (long)model.dramaId);
+        
+        // 停止当前播放的视频
+        [cell stopPlaying];
+        
+        // 跳转到短剧详情页面，从第2集开始播放
+        RRDramaDetailViewController *detailVC = [[RRDramaDetailViewController alloc] init];
+        detailVC.dramaId = [NSString stringWithFormat:@"%ld", (long)model.dramaId];
+        detailVC.startEpisodeIndex = 1; // 从第2集开始（索引从0开始）
+        [self.navigationController pushViewController:detailVC animated:YES];
+    }
 }
 
 - (void)dealloc {
