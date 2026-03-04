@@ -20,6 +20,7 @@
 #import "RRScreenCastControlViewController.h"
 #import "RRNavigationHelper.h"
 #import "RRDramaDetailViewController.h"
+#import <SDWebImage/SDWebImage.h>
 #import "RRDramaDetailViewController.h"
 #import <Masonry/Masonry.h>
 @class RRHomeFeedCell;
@@ -45,6 +46,7 @@ static const NSInteger kPageSize = 10;
 @property (nonatomic, strong) RRVideoOverlayView *overlayView;
 @property (nonatomic, strong) RRSeekBar *seekBar;
 @property (nonatomic, strong) UIButton *viewFullDramaButton; // 观看完整短剧按钮
+@property (nonatomic, strong) UIImageView *coverImageView; // 封面图
 @property (nonatomic, strong) RRVideoModel *videoModel;
 @property (nonatomic, assign) BOOL hasPreloaded;
 @property (nonatomic, assign) BOOL hasStarted; // 是否已经开始播放过
@@ -71,6 +73,14 @@ static const NSInteger kPageSize = 10;
         self.playerView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         self.playerView.delegate = self;
         [self.contentView addSubview:self.playerView];
+        
+        // 封面图（在播放器上层，视频加载完成后隐藏）
+        self.coverImageView = [[UIImageView alloc] initWithFrame:self.contentView.bounds];
+        self.coverImageView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        self.coverImageView.contentMode = UIViewContentModeScaleAspectFill;
+        self.coverImageView.clipsToBounds = YES;
+        self.coverImageView.backgroundColor = [UIColor blackColor];
+        [self.contentView addSubview:self.coverImageView];
         
         self.overlayView = [[RRVideoOverlayView alloc] initWithFrame:self.contentView.bounds];
         self.overlayView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -138,6 +148,14 @@ static const NSInteger kPageSize = 10;
     [self.overlayView configureWithModel:model];
     self.seekBar.progress = 0;
     self.seekBar.bufferProgress = 0;
+    
+    // 显示封面图
+    self.coverImageView.hidden = NO;
+    if (model.coverUrl.length > 0) {
+        [self.coverImageView sd_setImageWithURL:[NSURL URLWithString:model.coverUrl] placeholderImage:nil];
+    } else {
+        self.coverImageView.image = nil;
+    }
     
     // 如果有剧集信息且总集数大于1，显示"观看完整短剧"按钮
     if (model.dramaId > 0 && model.totalEpisodes > 1) {
@@ -219,6 +237,13 @@ static const NSInteger kPageSize = 10;
         self.overlayView.hidden = YES;
     } else if (state == RRPlayerStatePlaying) {
         self.overlayView.hidden = NO;
+        // 视频开始播放，淡出隐藏封面图
+        [UIView animateWithDuration:0.3 animations:^{
+            self.coverImageView.alpha = 0;
+        } completion:^(BOOL finished) {
+            self.coverImageView.hidden = YES;
+            self.coverImageView.alpha = 1; // 重置 alpha，下次使用
+        }];
     }
 }
 

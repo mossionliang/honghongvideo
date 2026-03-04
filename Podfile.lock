@@ -18,6 +18,7 @@ PODS:
   - KTVHTTPCache (3.1.0):
     - CocoaAsyncSocket
   - Masonry (1.1.0)
+  - MJExtension (3.4.2)
   - MJRefresh (3.7.9)
   - OpenSSL-Universal (1.1.2301)
   - SDWebImage (5.21.7):
@@ -28,6 +29,7 @@ DEPENDENCIES:
   - AFNetworking (~> 4.0)
   - KTVHTTPCache (~> 3.0)
   - Masonry (~> 1.1.0)
+  - MJExtension
   - MJRefresh
   - OpenSSL-Universal (~> 1.1.1)
   - SDWebImage (~> 5.0)
@@ -38,6 +40,7 @@ SPEC REPOS:
     - CocoaAsyncSocket
     - KTVHTTPCache
     - Masonry
+    - MJExtension
     - MJRefresh
     - OpenSSL-Universal
     - SDWebImage
@@ -47,10 +50,11 @@ SPEC CHECKSUMS:
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   KTVHTTPCache: a1f3c9c217be5af6985b240d660db262a0cbc18a
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
+  MJExtension: e97d164cb411aa9795cf576093a1fa208b4a8dd8
   MJRefresh: ff9e531227924c84ce459338414550a05d2aea78
   OpenSSL-Universal: ca89c20240633a77c776082ba76b7d90f992bf77
   SDWebImage: e9fc87c1aab89a8ab1bbd74eba378c6f53be8abf
 
-PODFILE CHECKSUM: a33555a08045cafb39c29e30c96848d34cb0a6db
+PODFILE CHECKSUM: 8a706343f3fe05190a556bdb40cd1a4d18b43dd3
 
 COCOAPODS: 1.16.2

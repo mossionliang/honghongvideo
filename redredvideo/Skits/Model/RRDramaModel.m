@@ -7,66 +7,49 @@
 
 @implementation RRDramaModel
 
+// MJExtension 属性映射
++ (NSDictionary *)mj_replacedKeyFromPropertyName {
+    return @{
+        @"dramaId": @"id",
+        @"desc": @"description",
+        @"category": @"category_name",
+        @"score": @"rating",
+        @"hotCount": @"like_count",
+        @"coverUrl": @"cover_url",
+        @"bannerUrl": @"banner_url",
+        @"totalEpisodes": @"total_episodes",
+        @"playCount": @"play_count"
+    };
+}
+
+// MJExtension 会自动处理 NULL 值，BOOL 类型默认为 NO，NSInteger 默认为 0
+
 + (instancetype)modelWithDict:(NSDictionary *)dict {
-    RRDramaModel *model = [[RRDramaModel alloc] init];
-    model.dramaId = dict[@"drama_id"] ?: @"";
-    model.title = dict[@"title"] ?: @"";
-    model.coverUrl = dict[@"cover_url"] ?: @"";
-    model.desc = dict[@"desc"] ?: @"";
-    model.category = dict[@"category"] ?: @"";
-    model.licenseNo = dict[@"license_no"] ?: @"";
-    model.copyrightOwner = dict[@"copyright_owner"] ?: @"";
-    model.tags = dict[@"tags"] ?: @[];
-    model.actors = dict[@"actors"] ?: @[];
-    model.totalEpisodes = [dict[@"total_episodes"] integerValue];
-    model.updateEpisode = [dict[@"update_episode"] integerValue];
-    model.score = [dict[@"score"] floatValue];
-    model.hotCount = [dict[@"hot_count"] integerValue];
-    model.playCount = [dict[@"play_count"] integerValue];
-    model.isVip = [dict[@"is_vip"] isKindOfClass:[NSNumber class]] ? [dict[@"is_vip"] boolValue] : NO;
-    model.isFree = [dict[@"is_free"] isKindOfClass:[NSNumber class]] ? [dict[@"is_free"] boolValue] : NO;
-    model.isFinished = [dict[@"is_finished"] isKindOfClass:[NSNumber class]] ? [dict[@"is_finished"] boolValue] : NO;
-    return model;
+    // 使用 MJExtension 自动转换，自动处理 NULL
+    return [self mj_objectWithKeyValues:dict];
 }
 
 + (instancetype)modelWithAPIDict:(NSDictionary *)dict baseURL:(NSString *)baseURL {
-    RRDramaModel *model = [[RRDramaModel alloc] init];
-    model.dramaId = [NSString stringWithFormat:@"%@", dict[@"id"] ?: @""];
-    model.title = dict[@"title"] ?: @"";
+    // 使用 MJExtension 自动转换
+    RRDramaModel *model = [self mj_objectWithKeyValues:dict];
     
-    // 封面：相对路径拼接 baseURL
-    NSString *cover = dict[@"cover_url"] ?: @"";
-    if (cover.length > 0 && ![cover hasPrefix:@"http"]) {
-        model.coverUrl = [NSString stringWithFormat:@"%@%@", baseURL, cover];
-    } else {
-        model.coverUrl = cover;
+    // 处理 URL 拼接
+    if (model.coverUrl.length > 0 && ![model.coverUrl hasPrefix:@"http"]) {
+        model.coverUrl = [NSString stringWithFormat:@"%@%@", baseURL, model.coverUrl];
     }
     
-    // 横版封面（Banner用）
-    NSString *banner = dict[@"banner_url"] ?: @"";
-    if (banner.length > 0 && ![banner hasPrefix:@"http"]) {
-        model.bannerUrl = [NSString stringWithFormat:@"%@%@", baseURL, banner];
-    } else {
-        model.bannerUrl = banner;
+    if (model.bannerUrl.length > 0 && ![model.bannerUrl hasPrefix:@"http"]) {
+        model.bannerUrl = [NSString stringWithFormat:@"%@%@", baseURL, model.bannerUrl];
     }
     
-    model.desc = dict[@"description"] ?: @"";
-    model.category = dict[@"category_name"] ?: @"";
-    model.totalEpisodes = [dict[@"total_episodes"] integerValue];
+    // 特殊字段处理
     model.updateEpisode = model.totalEpisodes; // API暂无更新集数字段，默认全部
-    model.score = [dict[@"rating"] floatValue];
-    model.playCount = [dict[@"play_count"] integerValue];
-    model.hotCount = [dict[@"like_count"] integerValue];
-    model.isVip = [dict[@"vip_free"] boolValue];
     model.isFree = [dict[@"price_per_episode"] floatValue] == 0;
     model.isFinished = YES; // 短剧默认完结
     
-    // tags
-    id tags = dict[@"tags"];
-    if ([tags isKindOfClass:[NSArray class]]) {
-        model.tags = tags;
-    } else {
-        model.tags = @[];
+    // vip_free 字段映射到 isVip
+    if ([dict[@"vip_free"] isKindOfClass:[NSNumber class]]) {
+        model.isVip = [dict[@"vip_free"] boolValue];
     }
     
     return model;

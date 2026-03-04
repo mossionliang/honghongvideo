@@ -49,11 +49,15 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		944F4E092F553464005F056F /* redredvideoTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = redredvideoTests;
 			sourceTree = "<group>";
 		};
 		944F4E132F553464005F056F /* redredvideoUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = redredvideoUITests;
 			sourceTree = "<group>";
 		};
@@ -275,13 +279,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-redredvideo/Pods-redredvideo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-redredvideo/Pods-redredvideo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

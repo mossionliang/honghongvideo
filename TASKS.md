@@ -126,9 +126,9 @@
 | iOS App | Objective-C, UIKit, AVFoundation, CoreData |
 | 网络 | AFNetworking / NSURLSession |
 | 播放器 | AVPlayer + 自定义控件, 乐播SDK(投屏) |
-| 后端(待定) | 接口先定义，语言后选 |
-| AI服务 | 大模型API + OCR + 视频理解 + NLP |
-| 管理后台 | React/Vue + Ant Design |
+| 后端P |
+| 管理后台 | React/Vue + Ant Design |(待定) | 接口先定义，语言后选 |
+| AI服务 | 大模型API + OCR + 视频理解 + NL
 | 基础设施 | MySQL/PostgreSQL, Redis, Kafka, OSS, CDN, ES |
 
 ---

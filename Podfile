@@ -15,6 +15,8 @@ target 'redredvideo' do
   pod 'OpenSSL-Universal', '~> 1.1.1'
   # 自动布局
   pod 'Masonry', '~> 1.1.0'
+  # JSON 模型转换（自动处理 NULL）
+  pod 'MJExtension'
 
 end
 
