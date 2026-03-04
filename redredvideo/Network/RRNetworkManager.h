@@ -21,6 +21,9 @@ typedef void(^RRNetFailure)(NSError *error);
 /// 服务器基础地址（默认 http://localhost:3000）
 @property (nonatomic, copy) NSString *baseURL;
 
+/// 显示服务器配置页面
++ (void)showServerConfig;
+
 /// GET 请求
 - (void)GET:(NSString *)path
      params:(nullable NSDictionary *)params

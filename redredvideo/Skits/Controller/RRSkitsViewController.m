@@ -75,6 +75,17 @@ static NSString * const kCategoryCellId = @"CategoryCell";
 
 - (void)setupNavigation {
     self.navigationItem.title = @"短剧";
+    
+    // 右上角设置按钮
+    UIBarButtonItem *settingButton = [[UIBarButtonItem alloc] initWithImage:[UIImage systemImageNamed:@"gearshape"]
+                                                                       style:UIBarButtonItemStylePlain
+                                                                      target:self
+                                                                      action:@selector(settingButtonTapped)];
+    self.navigationItem.rightBarButtonItem = settingButton;
+}
+
+- (void)settingButtonTapped {
+    [RRNetworkManager showServerConfig];
 }
 
 - (void)setupCollectionView {

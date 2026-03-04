@@ -7,6 +7,7 @@
 
 #import "RRNetworkManager.h"
 #import <AFNetworking/AFNetworking.h>
+#import "RRServerConfigViewController.h"
 
 @interface RRNetworkManager ()
 @property (nonatomic, strong) AFHTTPSessionManager *manager;
@@ -26,8 +27,16 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        // 默认本地服务器地址
-        _baseURL = @"http://192.168.4.157:3000";
+        // 从 UserDefaults 加载配置，如果没有则使用默认值
+        NSString *savedIP = [[NSUserDefaults standardUserDefaults] stringForKey:@"ServerIP"];
+        NSString *savedPort = [[NSUserDefaults standardUserDefaults] stringForKey:@"ServerPort"];
+        
+        if (savedIP.length > 0 && savedPort.length > 0) {
+            _baseURL = [NSString stringWithFormat:@"http://%@:%@", savedIP, savedPort];
+        } else {
+            // 默认本地服务器地址
+            _baseURL = @"http://192.168.4.157:3000";
+        }
         
         _manager = [AFHTTPSessionManager manager];
         _manager.requestSerializer = [AFJSONRequestSerializer serializer];
@@ -44,6 +53,28 @@
 - (NSString *)fullURLWithPath:(NSString *)path {
     if ([path hasPrefix:@"http"]) return path;
     return [NSString stringWithFormat:@"%@%@", self.baseURL, path];
+}
+
++ (void)showServerConfig {
+    RRServerConfigViewController *configVC = [[RRServerConfigViewController alloc] init];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:configVC];
+    nav.modalPresentationStyle = UIModalPresentationFullScreen;
+    
+    // 获取当前的 window（通过 scene）
+    UIWindow *window = nil;
+    for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if (scene.activationState == UISceneActivationStateForegroundActive) {
+            window = scene.windows.firstObject;
+            break;
+        }
+    }
+    
+    UIViewController *rootVC = window.rootViewController;
+    while (rootVC.presentedViewController) {
+        rootVC = rootVC.presentedViewController;
+    }
+    
+    [rootVC presentViewController:nav animated:YES completion:nil];
 }
 
 #pragma mark - GET

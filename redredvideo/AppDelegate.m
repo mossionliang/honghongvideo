@@ -10,6 +10,7 @@
 #import <KTVHTTPCache/KTVHTTPCache.h>
 #import <LBLelinkKit/LBLelinkKit.h>
 #import <MediaPlayer/MediaPlayer.h>
+#import "RRServerConfigViewController.h"
 
 #define kAppid @"15"
 #define kLBSerectKey @"34af861a598abe0a3e47a04ccf5f24e3"
@@ -45,7 +46,41 @@
     // 初始化乐播投屏SDK
     [self registerLBLelinkSDK];
     
+    // 检查服务器配置
+    [self checkServerConfig];
+    
     return YES;
+}
+
+- (void)checkServerConfig {
+    NSString *savedIP = [[NSUserDefaults standardUserDefaults] stringForKey:@"ServerIP"];
+    
+    // 如果没有配置过服务器IP，延迟1秒后弹出配置页面
+    if (savedIP.length == 0) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self showServerConfig];
+        });
+    }
+}
+
+- (void)showServerConfig {
+    RRServerConfigViewController *configVC = [[RRServerConfigViewController alloc] init];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:configVC];
+    nav.modalPresentationStyle = UIModalPresentationFullScreen;
+    
+    // 获取当前的 window（通过 scene）
+    UIWindow *window = nil;
+    for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if (scene.activationState == UISceneActivationStateForegroundActive) {
+            window = scene.windows.firstObject;
+            break;
+        }
+    }
+    
+    UIViewController *rootVC = window.rootViewController;
+    if (rootVC) {
+        [rootVC presentViewController:nav animated:YES completion:nil];
+    }
 }
 
 /// 注册投屏SDK
